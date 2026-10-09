@@ -41,5 +41,6 @@ console.log('PASS combat orders: filters, direct override, melee tower edge for 
  vm.createContext(context);vm.runInContext(source.slice(source.indexOf('function command(p)'),source.indexOf('for(const [kind,d]of Object.entries(BUILDINGS))')),context);
  context.command({x:1200,y:700});assert.deepEqual(calls.map(c=>c.mode),['advance','move']);
  calls.length=0;context.mode='move';context.command({x:1200,y:700});assert.deepEqual(calls.map(c=>c.mode),['move','move']);
+ calls.length=0;context.mode=null;context.unitHit=()=>true;context.CLANS=[{name:'A'},{name:'B'},{name:'C'},{name:'D'}];g.resources.push({id:'overlap',type:'rice',x:850,y:400});context.command({x:850,y:400});assert.equal(calls[0].mode,'target','enemy standing on a resource gets attacked instead of gathered');
  console.log('PASS UI context orders: mixed group right-click auto-attacks with soldiers; explicit move stays peaceful');
 }
