@@ -6,7 +6,7 @@ const BUILDINGS = {
   shrine:{name:'สำนักวิญญาณ',icon:'✦',rice:160,water:90,seconds:22,hp:800,w:94,h:78,description:'ชาวบ้าน → ผู้ฝึกวิญญาณ · ฝึกครบ 3 วิชาเป็นยอดฝีมือขั้น 3'},
   warhall:{name:'หอจอมทัพ',icon:'♛',rice:220,water:140,seconds:30,hp:1250,w:112,h:90,description:'ต้องมีโรงดาบ โรงธนู และสำนักวิญญาณ · ยอดฝีมือขั้น 3 → จอมทัพขั้น 4'},
   well:{name:'บ่อน้ำ',icon:'◈',rice:100,water:70,seconds:16,hp:450,w:56,h:52,description:'จุดตักน้ำใกล้ฐาน · ต้องใช้ชาวบ้านเก็บ'},
-  store:{name:'ยุ้งฉาง',icon:'▤',rice:100,water:40,seconds:15,hp:650,w:86,h:72,description:'จุดส่งเสบียง · ความจุข้าว +300 / น้ำ +200'},
+  store:{name:'ยุ้งฉาง',icon:'▤',rice:100,water:40,seconds:15,hp:650,w:86,h:72,description:'สร้างในพื้นที่สำรวจเพื่อรับเสบียงใกล้อู่ข้าว · ความจุข้าว +300 / น้ำ +200'},
   tower:{name:'ป้อมธนู',icon:'♜',rice:130,water:80,seconds:22,hp:900,w:62,h:62,description:'ยิงศัตรูอัตโนมัติ · ระยะ 300 · อัปเกรดได้ 3 ระดับ'}
 };
 const TRAINING={
@@ -34,6 +34,13 @@ const RICE_PATCHES=48;
 function ricePatchPoint(r,index){const row=Math.floor(index/8),col=index%8;return{x:r.x+(col-3.5)*16+(row-2.5)*15,y:r.y+(col-3.5)*7-(row-2.5)*9};}
 function unitTitle(u){return u.worker?'ชาวบ้าน':u.className||TRAINING[u.ranged?'archery':'dojo'].name;}
 const RICE_CYCLE={fallow:8,growing:22};
+// Shared, deterministic neutral food sites: one expansion and one contested site per quadrant.
+const RICE_SITES=[
+ {x:900,y:650,name:'อู่ข้าวตะวันตกเฉียงเหนือ',max:720},{x:2300,y:650,name:'อู่ข้าวตะวันออกเฉียงเหนือ',max:720},
+ {x:2300,y:1750,name:'อู่ข้าวตะวันออกเฉียงใต้',max:720},{x:900,y:1750,name:'อู่ข้าวตะวันตกเฉียงใต้',max:720},
+ {x:1300,y:750,name:'อู่ข้าวกลางเหนือฝั่งตะวันตก',max:960},{x:1900,y:750,name:'อู่ข้าวกลางเหนือฝั่งตะวันออก',max:960},
+ {x:1900,y:1650,name:'อู่ข้าวกลางใต้ฝั่งตะวันออก',max:960},{x:1300,y:1650,name:'อู่ข้าวกลางใต้ฝั่งตะวันตก',max:960}
+];
 const ECON_RESOURCES=STARTS.flatMap((b,team)=>{const s=b.x<W/2?1:-1;return[{id:'rice-'+team,type:'rice',x:b.x+s*180,y:b.y+(b.y<H/2?220:-200),amount:480,max:480,stage:'ripe',cycle:0,team},{id:'water-'+team,type:'water',x:b.x-s*125,y:b.y-70,visualX:b.x-s*190,visualY:b.y-70,amount:Infinity,team}];});
 class VillageBattle extends Battle {
   constructor(player=0,world=new World()) {
@@ -48,7 +55,17 @@ class VillageBattle extends Battle {
     this.war=false;this.wave=0;this.economyStats={rice:0,water:0,built:0,trained:0,born:0};
     for(const u of this.units){const b=STARTS[u.team],s=b.x<W/2?1:-1,i=u.id%10;Object.assign(u,world.free({x:b.x+s*(140+i%3*36),y:b.y+Math.floor(i/3)*40}));u.order='hold';u.dest=null;u.raid=false;u.path=[];if(i<6)this.makeWorker(u);else this.makeSoldier(u,i>=8);}
     for(let team=0;team<4;team++){const b=STARTS[team],s=b.x<W/2?1:-1;this.addStructure('hut',{x:b.x-s*155,y:b.y+(b.y<H/2?150:-150)},team,true);}
-    this.rebuildObstacles();this.updateVision();
+    this.rebuildObstacles();this.addNeutralRice();this.updateVision();
+  }
+  addNeutralRice(){
+    for(const [i,site] of RICE_SITES.entries()){
+      const candidates=[];
+      for(let y=site.y-280;y<=site.y+280;y+=20)for(let x=site.x-280;x<=site.x+280;x+=20)candidates.push({x,y});
+      candidates.sort((a,b)=>dist(a,site)-dist(b,site));
+      const p=candidates.find(p=>this.resources.every(r=>dist(r,p)>250)&&this.structures.every(b=>dist(b,p)>200)&&Array.from({length:RICE_PATCHES},(_,n)=>ricePatchPoint(p,n)).every(q=>this.world.walkable(q))&&[[-115,-75],[115,-75],[-115,75],[115,75]].every(([dx,dy])=>this.world.walkable({x:p.x+dx,y:p.y+dy}))&&this.world.path(STARTS[i%4],p).length);
+      if(!p)throw new Error('No reachable neutral rice site: '+i);
+      this.resources.push({id:'rice-neutral-'+i,type:'rice',...p,name:site.name,team:null,neutral:true,amount:site.max,max:site.max,patches:Array(RICE_PATCHES).fill(site.max/RICE_PATCHES),stage:'ripe',cycle:0});
+    }
   }
   alive(team){return this.units.filter(u=>u.hp>0&&!u.inTraining&&(team===undefined||u.team===team));}
   population(team=this.player){return this.units.filter(u=>u.hp>0&&u.team===team).length;}
@@ -106,7 +123,7 @@ class VillageBattle extends Battle {
   rebuildObstacles(){this.world.blocked.set(this.terrainBlocked);for(const b of this.structures.filter(b=>b.hp>0)){for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const p={x:x*CELL+20,y:y*CELL+20};if(Math.abs(p.x-b.x)<b.w/2&&Math.abs(p.y-b.y)<b.h/2)this.world.blocked[y*COLS+x]=1;}}for(const u of this.alive()){if(!this.world.walkable(u)){const p=this.world.free(u);if(p)Object.assign(u,p);}u.path=[];u.repath=0;}}
   door(b){return this.world.free({x:b.x,y:b.y+b.h/2+45});}
   buildRequirement(kind){return kind==='warhall'&&!['dojo','archery','shrine'].every(k=>this.structures.some(b=>b.team===this.player&&b.hp>0&&b.complete&&b.kind===k))?'ต้องสร้างโรงดาบ โรงธนู และสำนักวิญญาณให้เสร็จก่อน':null;}
-  placement(kind,p){const required=this.buildRequirement(kind);if(required)return{ok:false,reason:required};const d=BUILDINGS[kind];if(!d)return{ok:false,reason:'ไม่พบอาคาร'};const point={x:Math.round(p.x/20)*20,y:Math.round(p.y/20)*20};if(!this.visibleAt(point))return{ok:false,point,reason:'ต้องสำรวจพื้นที่ก่อน'};if(kind!=='camp'&&!this.structures.some(b=>b.team===this.player&&b.complete&&b.hp>0&&dist(b,point)<650))return{ok:false,point,reason:'สร้างห่างจากอาคารของเราได้ไม่เกิน 650'};for(const dx of [-d.w/2-15,0,d.w/2+15])for(const dy of [-d.h/2-15,0,d.h/2+15])if(!this.world.walkable({x:point.x+dx,y:point.y+dy}))return{ok:false,point,reason:'พื้นที่ติดป่า แม่น้ำ หรือสิ่งก่อสร้าง'};if(this.structures.some(b=>b.hp>0&&Math.abs(b.x-point.x)<(b.w+d.w)/2+30&&Math.abs(b.y-point.y)<(b.h+d.h)/2+30))return{ok:false,point,reason:'เว้นระยะจากอาคารข้างเคียง'};if(this.resources.some(r=>dist(point,r)<(r.type==='rice'?95:85)))return{ok:false,point,reason:'ต้องเว้นพื้นที่นาและจุดตักน้ำ'};return{ok:true,point};}
+  placement(kind,p){const required=this.buildRequirement(kind);if(required)return{ok:false,reason:required};const d=BUILDINGS[kind];if(!d)return{ok:false,reason:'ไม่พบอาคาร'};const point={x:Math.round(p.x/20)*20,y:Math.round(p.y/20)*20};if(!this.visibleAt(point))return{ok:false,point,reason:'ต้องสำรวจพื้นที่ก่อน'};if(!['camp','store'].includes(kind)&&!this.structures.some(b=>b.team===this.player&&b.complete&&b.hp>0&&dist(b,point)<650))return{ok:false,point,reason:'สร้างห่างจากอาคารของเราได้ไม่เกิน 650'};for(const dx of [-d.w/2-15,0,d.w/2+15])for(const dy of [-d.h/2-15,0,d.h/2+15])if(!this.world.walkable({x:point.x+dx,y:point.y+dy}))return{ok:false,point,reason:'พื้นที่ติดป่า แม่น้ำ หรือสิ่งก่อสร้าง'};if(this.structures.some(b=>b.hp>0&&Math.abs(b.x-point.x)<(b.w+d.w)/2+30&&Math.abs(b.y-point.y)<(b.h+d.h)/2+30))return{ok:false,point,reason:'เว้นระยะจากอาคารข้างเคียง'};if(this.resources.some(r=>r.type==='rice'?Math.abs(point.x-r.x)<115+d.w/2+15&&Math.abs(point.y-r.y)<75+d.h/2+15:dist(point,r)<85))return{ok:false,point,reason:'ต้องเว้นพื้นที่นาและจุดตักน้ำ'};return{ok:true,point};}
   build(kind,p,ids){if(!this.running||this.over)return{ok:false,reason:'กดเริ่มหมู่บ้านก่อน'};const workers=this.workers().filter(u=>ids.includes(u.id)&&u.job?.type!=='train');if(!workers.length)return{ok:false,reason:'เลือกชาวบ้านอย่างน้อย 1 คน'};const result=this.placement(kind,p);if(!result.ok)return result;const d=BUILDINGS[kind];if(!this.affordable(d))return{ok:false,reason:'ข้าวหรือน้ำไม่เพียงพอ'};if(!this.world.path(workers[0],{x:result.point.x,y:result.point.y+d.h/2+45}).length)return{ok:false,reason:'ชาวบ้านไปไม่ถึงจุดก่อสร้าง'};this.spend(d);const b=this.addStructure(kind,result.point,this.player);this.rebuildObstacles();for(const u of workers)this.setJob(u,{type:'build',buildingId:b.id});this.notify('เริ่มสร้าง'+d.name+' · หัก '+d.rice+' ข้าว / '+d.water+' น้ำ');return{ok:true,building:b};}
   cancelBuilding(b){if(!b||b.team!==this.player||b.complete||b.hp<=0)return false;this.stock[this.player].rice+=Math.floor(b.cost.rice*.8);this.stock[this.player].water+=Math.floor(b.cost.water*.8);b.hp=0;for(const u of this.workers())if(u.job?.buildingId===b.id)this.setJob(u,null);this.rebuildObstacles();this.notify('ยกเลิกก่อสร้าง · คืนทรัพยากร 80%');return true;}
   setJob(u,job){if(u.job?.type==='train')return false;u.harvesting=false;u.job=job;u.order=job?'work':'hold';u.dest=null;u.path=[];u.repath=0;u.work=0;return true;}

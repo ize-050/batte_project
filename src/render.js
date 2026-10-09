@@ -19,7 +19,7 @@ function drawRiceField(r){
     }
     if(r.lastHarvest?.patch===i&&game.t-r.lastHarvest.t<.35){ctx.strokeStyle='#f9e0a8';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y-8,11,Math.PI,Math.PI*1.8);ctx.stroke();}
   }
-  const remaining=r.patches.filter(n=>n>.001).length,label=ripe?'นาข้าว '+Math.ceil(r.amount)+' / '+r.max+' · เหลือ '+remaining+'/48 กอ':r.stage==='fallow'?'เกี่ยวหมดแล้ว · พักดิน '+Math.ceil(r.cycle)+' วิ':'ต้นกล้างอกใหม่ · '+Math.ceil(r.cycle)+' วิ';
+  const remaining=r.patches.filter(n=>n>.001).length,label=ripe?(r.neutral?'อู่ข้าวส่วนกลาง ':'นาข้าว ')+Math.ceil(r.amount)+' / '+r.max+' · เหลือ '+remaining+'/48 กอ':r.stage==='fallow'?'เกี่ยวหมดแล้ว · พักดิน '+Math.ceil(r.cycle)+' วิ':'ต้นกล้างอกใหม่ · '+Math.ceil(r.cycle)+' วิ';
   ctx.font='11px "Noto Sans Thai",sans-serif';ctx.textAlign='center';const width=ctx.measureText(label).width+18;ctx.fillStyle='#071a12ee';ctx.fillRect(-width/2,82,width,24);ctx.fillStyle=ripe?'#efd580':'#a9d987';ctx.fillText(label,0,98);
   ctx.fillStyle='#243d2a';ctx.fillRect(-65,110,130,4);ctx.fillStyle=ripe?'#dec269':'#81ba6a';ctx.fillRect(-65,110,130*(ripe?r.amount/r.max:growth),4);ctx.restore();
 }
