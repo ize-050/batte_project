@@ -11,7 +11,7 @@ online=(()=>{
  function updateHUD(){
   if(!api.active)return;
   $('start').disabled=true;$('start').textContent=api.inMatch?'ออนไลน์ · '+latency+' ms':'รอในห้อง';
-  for(const id of ['clan','reset','showcase','expedition-demo','raid'])$(id).disabled=true;
+  for(const id of ['clan','reset','showcase','expedition-demo','raid','bot-open'])$(id).disabled=true;
   $('online-open').textContent=(api.connected?'● ':'○ ')+(lobby?.code||'กำลังเชื่อมต่อ');
   $('objective').textContent=api.inMatch?'ทำลายศาลาบัญชาการฝ่ายอื่น · ห้อง '+(lobby?.code||''):'รอเพื่อนและกดพร้อมรบในห้อง';
   root.querySelector('.r-prototype small').textContent=api.connected?'ONLINE · SERVER SYNC':'RECONNECTING';

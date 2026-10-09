@@ -71,3 +71,5 @@
 #forest-rts #r-expedition-controls{border-top:1px solid #6c6748;margin-top:8px;padding-top:7px}#forest-rts #r-expedition-stock{color:#ecd3a0;font-size:12px}#forest-rts #r-expedition-controls .r-job-buttons{display:flex;flex-wrap:wrap;margin-top:6px}#forest-rts #r-expedition-controls button{padding:7px;flex:1 1 85px;font-size:11px}#forest-rts #r-special-training{font-size:11px;color:#d5c698;padding:8px 0}#forest-rts #r-special-training summary{cursor:pointer;padding-bottom:7px}#forest-rts #r-special-training small{line-height:1.6;color:#afbea4}
 
 #forest-rts #r-camera-speed{width:90px;vertical-align:middle}#forest-rts .r-view{flex-wrap:wrap}#forest-rts #r-pan[aria-pressed="true"]{background:#5b5731;outline:1px solid #e6cb87}
+
+#forest-rts #r-bot-panel label{display:block;margin:16px 0}#forest-rts #r-bot-panel select{margin-left:12px;min-width:180px}#forest-rts #r-bot-panel p{max-width:720px}
