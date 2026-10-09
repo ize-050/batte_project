@@ -37,7 +37,7 @@ console.log('PASS combat orders: filters, direct override, melee tower edge for 
 {
  const vm=require('node:vm'),source=require('node:fs').readFileSync(__dirname+'/src/controller.js','utf8');
  const {g,u}=arena(),worker={...u,id:999,worker:true};g.units.push(worker);const calls=[];g.issue=(ids,mode)=>calls.push({ids,mode});
- const context={game:g,mode:null,player:0,selected:new Set([u.id,worker.id]),own:()=>[u,worker],ownWorkers:()=>[worker],message:()=>{},updateUI:()=>{},TRAINING:{},CLANS:[],dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),unitHit:()=>false};
+ const context={renderActor:u=>u,game:g,mode:null,player:0,selected:new Set([u.id,worker.id]),own:()=>[u,worker],ownWorkers:()=>[worker],message:()=>{},updateUI:()=>{},TRAINING:{},CLANS:[],dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),unitHit:()=>false};
  vm.createContext(context);vm.runInContext(source.slice(source.indexOf('function command(p)'),source.indexOf('for(const [kind,d]of Object.entries(BUILDINGS))')),context);
  context.command({x:1200,y:700});assert.deepEqual(calls.map(c=>c.mode),['advance','move']);
  calls.length=0;context.mode='move';context.command({x:1200,y:700});assert.deepEqual(calls.map(c=>c.mode),['move','move']);

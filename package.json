@@ -9,7 +9,7 @@
   "scripts": {
     "build": "node build-village.cjs",
     "start": "node server.cjs",
-    "test": "npm run build && node test-forest.cjs && node test-economy.cjs && node test-progression.cjs && node test-online.cjs && node test-ascension.cjs && node test-combat-orders.cjs && node test-expedition.cjs && node test-rice-sites.cjs && node test-horse-wander.cjs && node test-map-controls.cjs && node test-bots.cjs"
+    "test": "npm run build && node test-forest.cjs && node test-economy.cjs && node test-progression.cjs && node test-online.cjs && node test-ascension.cjs && node test-combat-orders.cjs && node test-expedition.cjs && node test-rice-sites.cjs && node test-horse-wander.cjs && node test-map-controls.cjs && node test-bots.cjs && node test-motion.cjs"
   },
   "dependencies": {
     "ws": "^8.18.3"

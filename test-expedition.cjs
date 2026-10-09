@@ -81,6 +81,6 @@ console.log('PASS expedition: Naga sabotage costs enemy supplies, enforces coold
 {
  const fs=require('node:fs'),vm=require('node:vm'),s=fs.readFileSync(__dirname+'/src/render.js','utf8');
  const loop=s.slice(s.indexOf('if(online?.active){simulationDebt=0;'),s.indexOf('draw();uiElapsed+=dt;'));
- for(const hz of [30,60,90,144]){const steps=[],c={online:null,simulationDebt:0,dt:1/hz,game:{step:dt=>steps.push(dt)}};vm.createContext(c);for(let i=0;i<hz*10;i++)vm.runInContext(loop,c);assert(steps.length>=199&&steps.length<=200);assert(steps.every(d=>d===.05));}
+ for(const hz of [30,60,90,144]){const steps=[],c={motionFrames:{capture(){}},online:null,simulationDebt:0,dt:1/hz,game:{step:dt=>steps.push(dt)}};vm.createContext(c);for(let i=0;i<hz*10;i++)vm.runInContext(loop,c);assert(steps.length>=199&&steps.length<=200);assert(steps.every(d=>d===.05));}
  console.log('PASS local simulation: 30/60/90/144 Hz displays use the same 20 Hz game rules');
 }

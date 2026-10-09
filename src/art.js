@@ -14,7 +14,7 @@ function unitArtIndex(u){return u.worker?12:['adept','mystic'].includes(u.role)?
 function drawWalkingBody(u){
  if(drawExpeditionBody(u))return;
  if(u.form&&drawAscendedBody(ctx,u))return;
- const walking=(u.movingUntil||0)>game.t,frame=walking?Math.floor((u.stride||0)*.6)%4:0;
+ const walking=(u.movingUntil||0)>(u._renderTime??game.t),frame=walking?Math.floor((u.stride||0)*.6)%4:0;
  const row=u.worker?0:['adept','mystic'].includes(u.role)?3:u.ranged?2:1;
  const bob=walking?-Math.abs(Math.sin(u.stride||0))*.6:0;
  ctx.save();if(Math.cos(u.angle)<-.1)ctx.scale(-1,1);
@@ -60,7 +60,7 @@ function paintRichTerrain(){if(!artReady||!groundReady)return;const noise=seeded
  for(const y of BRIDGES){const x=riverX(y);ellipse(tc,x+8,y+19,140,66,'#0d1c18aa');tc.fillStyle='#6d6d53';tc.fillRect(x-122,y-51,244,102);for(let row=0;row<5;row++)for(let col=0;col<12;col++){tc.fillStyle=['#7b7e60','#696e52','#8c8c6d','#5c6b4e'][(row+col)%4];tc.fillRect(x-119+col*20+(row%2?4:0),y-47+row*19,18,17);}for(const side of [-1,1])for(let i=0;i<13;i++){tc.fillStyle=i%3?'#727957':'#8a8c6a';tc.fillRect(x-127+i*20,y+side*54-13,18,23);tc.fillStyle='#485c36';tc.fillRect(x-127+i*20,y+side*54-14,18,5);}}
  for(let i=0;i<16000;i++){const x=noise()*W,y=noise()*H;if(world.water({x,y}))continue;tc.fillStyle=['#81905b30','#3b4a2435','#a3956538'][i%3];tc.fillRect(x,y,1+noise()*3,noise()*4);}
  for(const p of world.trees)richTree(tc,p);for(const p of EXPANSIONS){sprite(tc,3,p.x,p.y,115,117);}
- draw();
+ cacheMiniTerrain();draw();
 }
 atlas.onload=()=>{artReady=true;paintRichTerrain();};groundArt.onload=()=>{groundReady=true;paintRichTerrain();};atlas.onerror=groundArt.onerror=()=>message('โหลดภาพไม่สำเร็จ · ลองรีเฟรชหน้าอีกครั้ง');
 atlas.src=ART_ATLAS;groundArt.src=ART_GROUND;pondArt.onload=()=>{pondReady=true;};pondArt.src=ART_POND;

@@ -3,7 +3,7 @@ expeditionAtlas.onload=()=>{expeditionArtReady=true;for(const cv of root.querySe
 function expeditionSprite(c,row,frame,x,y,size,flip=false){if(!expeditionArtReady)return false;const cw=expeditionAtlas.width/6,ch=expeditionAtlas.height/4;c.save();c.translate(x,y);if(flip)c.scale(-1,1);c.drawImage(expeditionAtlas,frame*cw,row*ch,cw,ch,-size/2,-size*.94,size,size);c.restore();return true;}
 function drawExpeditionBody(u){
  if(!expeditionArtReady||!u.horseId&&!['scout','siege'].includes(u.special))return false;
- const row=u.horseId?1:u.special==='scout'?2:3,moving=(u.movingUntil||0)>game.t,frame=u.anim>0?(u.anim>.17?4:5):moving?Math.floor((u.stride||0)*.4)%4:4,size=u.horseId?90:u.special==='siege'?88:61;
+ const row=u.horseId?1:u.special==='scout'?2:3,moving=(u.movingUntil||0)>(u._renderTime??game.t),frame=u.anim>0?(u.anim>.17?4:5):moving?Math.floor((u.stride||0)*.4)%4:4,size=u.horseId?90:u.special==='siege'?88:61;
  ctx.save();if(u.stealth)ctx.globalAlpha=.45;
  expeditionSprite(ctx,row,frame,0,moving?-Math.abs(Math.sin(u.stride||0))*.6:0,size,Math.cos(u.angle)<-.1);
  ctx.fillStyle=CLANS[u.team].color;ctx.fillRect(-6,-size*.47,12,3);
@@ -12,10 +12,10 @@ function drawExpeditionBody(u){
 }
 function drawHorse(h){
  if(!['wild','catching','leading'].includes(h.status))return;
- const frame=(h.movingUntil||0)>game.t?Math.floor((h.stride||0)*.4)%4:4;
+ const frame=(h.movingUntil||0)>(h._renderTime??game.t)?Math.floor((h.stride||0)*.4)%4:4;
  ctx.save();ctx.translate(h.x,h.y);ellipse(ctx,0,1,25,8,'#0a160c77');expeditionSprite(ctx,0,frame,0,0,72,Math.cos(h.angle||0)<-.1);
  ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillStyle='#ecd7a5';ctx.fillText(h.status==='wild'?'ม้าป่า · คลิกขวาเพื่อจับ':h.status==='catching'?'กำลังจับ '+Math.floor(h.progress*100)+'%':'พากลับคอก',0,-72);
- if(h.status==='leading'){const u=game.units.find(u=>u.id===h.handlerId);if(u){ctx.strokeStyle='#bdac7d';ctx.beginPath();ctx.moveTo(20,-33);ctx.lineTo(u.x-h.x,u.y-h.y-18);ctx.stroke();}}ctx.restore();
+ if(h.status==='leading'){const handler=game.units.find(u=>u.id===h.handlerId),u=handler&&renderActor(handler);if(u){ctx.strokeStyle='#bdac7d';ctx.beginPath();ctx.moveTo(20,-33);ctx.lineTo(u.x-h.x,u.y-h.y-18);ctx.stroke();}}ctx.restore();
 }
 function expeditionBuildingDetails(b){
  if(!b.complete||b.hp<=0)return;

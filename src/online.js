@@ -58,7 +58,7 @@ online=(()=>{
   for(const method of ['cancelTraining','cancelBuilding'])game[method]=b=>command(method,{buildingId:b?.id});
   game.repair=(b,ids)=>command('repair',{buildingId:b?.id,ids});
   game.cast=(team,ids,point)=>command('cast',{ids,point});game.volley=(team,ids)=>command('volley',{ids});game.heroSkill=ids=>command('heroSkill',{ids});
-  game.step=dt=>{game.t=Math.min(game.t+dt,(game.snapshotTime||0)+.12);for(const u of game.units){if(u._netX===undefined)continue;const f=Math.min(1,dt*18);u.x+=(u._netX-u.x)*f;u.y+=(u._netY-u.y)*f;}};
+  game.step=dt=>{game.t=Math.min(game.t+dt,(game.snapshotTime||0)+.12);motionFrames.advance(dt);};
  }
  let obstacleKey='';
  function applyState(state){
@@ -66,10 +66,9 @@ online=(()=>{
    player=session.team;world=new World();game=new EconomyBattle(player,world);api.inMatch=true;obstacleKey='';selected.clear();selectedBuilding=null;lastSoundId=lastEventId=0;camera.zoom=1.05;centerHome();
    $('intro').hidden=true;$('online').hidden=true;$('tech').hidden=true;attachControls();
   }
-  const oldUnits=new Map(game.units.map(u=>[u.id,u])),buildingId=selectedBuilding?.id;
+  const buildingId=selectedBuilding?.id;
   const {seen,visible,...data}=state;
-  for(const u of data.units){const previous=oldUnits.get(u.id);u._netX=u.x;u._netY=u.y;if(previous&&dist(previous,u)<100){u.x=previous.x;u.y=previous.y;}u.path=[];}
-  Object.assign(game,data,{player,snapshotTime:state.t});
+  Object.assign(game,data,{player,snapshotTime:state.t});motionFrames.capture(game,state.t);
   game.seen=Uint8Array.from(atob(seen),c=>c.charCodeAt(0));game.visible=Uint8Array.from(atob(visible),c=>c.charCodeAt(0));
   for(const r of game.resources)if(r.type==='water')r.amount=Infinity;
   const key=game.structures.filter(b=>b.hp>0).map(b=>b.id).join(',');

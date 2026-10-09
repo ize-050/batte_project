@@ -9,7 +9,7 @@ function formSprite(c,team,frame,x,y,size,flip=false){
 }
 function drawAscendedBody(c,u){
  if(!formsReady)return false;
- const walking=(u.movingUntil||0)>game.t,attacking=u.anim>0;
+ const walking=(u.movingUntil||0)>(u._renderTime??game.t),attacking=u.anim>0;
  const frame=attacking?(u.anim>.17?4:5):walking?Math.floor((u.stride||0)*.5)%4:0;
  const empowered=u.awakened>0,size=u.tier===4?91:78,flip=Math.cos(u.angle)<-.1;
  c.save();
