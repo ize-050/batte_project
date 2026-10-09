@@ -14,6 +14,29 @@ class EconomyBattle extends VillageBattle {
  constructor(player=0,world=new World()){
   super(player,world);
   this.horses=STARTS.flatMap((b,team)=>Array.from({length:3},(_,i)=>({id:'horse-'+team+'-'+i,...world.free({x:b.x+(b.x<W/2?1:-1)*(300+i*45),y:b.y+(b.y<H/2?170:-170)}),status:'wild',team:null,handlerId:null,stableId:null,riderId:null,progress:0})));
+  this.horseRandom=seeded(7319);
+  this.horses.forEach((h,i)=>{this.releaseHorse(h);h.roamWait=1+(i%3)*.8;});
+ }
+ releaseHorse(h){
+  Object.assign(h,{status:'wild',team:null,handlerId:null,stableId:null,riderId:null,progress:0,roamHome:{x:h.x,y:h.y},roamGoal:null,roamWait:2,roamTime:0,path:[],repath:0,speed:58,walk:0,movingUntil:0});
+ }
+ wildHorseStep(h,dt){
+  if(!this.world.walkable(h)){Object.assign(h,this.world.free(h));this.releaseHorse(h);}
+  if(h.roamWait>0){h.roamWait=Math.max(0,h.roamWait-dt);return;}
+  if(!h.roamGoal){
+   // Pick short, reachable walks around the herd, never across forest or water.
+   for(let i=0;i<8;i++){
+    const angle=this.horseRandom()*Math.PI*2,radius=45+this.horseRandom()*105;
+    const p={x:h.roamHome.x+Math.cos(angle)*radius,y:h.roamHome.y+Math.sin(angle)*radius};
+    if(!this.world.walkable(p)||dist(h,p)<35)continue;
+    const path=this.world.path(h,p);
+    if(!path.length||path.length*CELL>360||path.some(q=>dist(q,h.roamHome)>180))continue;
+    h.roamGoal=path.at(-1);h.path=path;h.goalCell=this.world.cell(h.roamGoal);h.repath=1;h.roamTime=0;break;
+   }
+   if(!h.roamGoal){h.roamWait=2;return;}
+  }
+  h.roamTime+=dt;
+  if(this.move(h,h.roamGoal,dt)||h.roamTime>8){h.roamGoal=null;h.path=[];h.roamWait=2+this.horseRandom()*3;h.movingUntil=0;}
  }
  makeWorker(u){super.makeWorker(u);u.damage=8;}
  observable(team,v){
@@ -47,14 +70,14 @@ class EconomyBattle extends VillageBattle {
   return super.issue(ids,mode,p);
  }
  availableHorse(b){return this.horses?.find(h=>h.status==='stabled'&&h.stableId===b?.id&&h.team===b.team);}
- releaseCapture(u){const h=this.horses?.find(h=>h.handlerId===u.id&&['catching','leading'].includes(h.status));if(h)Object.assign(h,{status:'wild',team:null,handlerId:null,stableId:null,progress:0});}
+ releaseCapture(u){const h=this.horses?.find(h=>h.handlerId===u.id&&['catching','leading'].includes(h.status));if(h)this.releaseHorse(h);}
  captureHorse(ids,horseId){
   const h=this.horses.find(h=>h.id===horseId&&h.status==='wild'&&this.visibleAt(h));
   const u=this.workers().filter(u=>ids.includes(u.id)&&u.job?.type!=='train').sort((a,b)=>dist(a,h||STARTS[this.player])-dist(b,h||STARTS[this.player]))[0];
   const stable=this.structures.find(b=>b.team===this.player&&b.kind==='stable'&&b.hp>0&&b.complete);
   if(!this.running||this.over||!h||!u||!stable)return{ok:false,reason:'เลือกชาวบ้านและม้าป่าที่มองเห็น · ต้องสร้างคอกม้าให้เสร็จก่อน'};
   if(!this.world.path(u,h).length)return{ok:false,reason:'เดินไปหาม้าไม่ได้'};
-  this.setJob(u,{type:'capture',horseId:h.id,phase:'catch',elapsed:0});Object.assign(h,{status:'catching',handlerId:u.id,team:u.team,stableId:stable.id});
+  this.setJob(u,{type:'capture',horseId:h.id,phase:'catch',elapsed:0});Object.assign(h,{status:'catching',handlerId:u.id,team:u.team,stableId:stable.id,path:[],roamGoal:null,movingUntil:0});
   return{ok:true};
  }
  mount(ids,stableId){
@@ -69,6 +92,7 @@ class EconomyBattle extends VillageBattle {
   let n=0;for(const u of this.units.filter(u=>u.team===team&&ids.includes(u.id)&&u.horseId)){
    const h=this.horses?.find(h=>h.id===u.horseId);const b=returnToStable&&this.structures.filter(b=>b.team===u.team&&b.kind==='stable'&&b.hp>0&&b.complete).sort((a,b)=>dist(a,u)-dist(b,u))[0];
    if(h)Object.assign(h,{...(b?this.door(b):this.world.free(u)),status:b?'stabled':'wild',stableId:b?b.id:null,team:b?u.team:null,riderId:null,handlerId:null,progress:0});
+   if(h&&!b)this.releaseHorse(h);
    u.horseId=null;u.sprinting=false;u.charge=0;u.speed=u.baseSpeed||CLANS[u.team].speed;n++;
   }return n>0;
  }
@@ -118,7 +142,7 @@ class EconomyBattle extends VillageBattle {
   // Workers briefly defend their workplace and then resume their economy job.
   if(v.worker&&source?.id!==undefined&&source.team!==v.team&&!v.inTraining&&v.job?.type==='gather'&&dist(v,source)<=95){v.resumeJob={...v.job};v.job=null;v.defending=true;v.defendTime=4;v.order='target';v.target=source;v.defendOrigin={x:v.x,y:v.y};}
   const result=super.hit(v,amount,source,pierce);
-  if(v.hp<=0&&v.horseId){const h=this.horses?.find(h=>h.riderId===v.id);if(h)Object.assign(h,{...this.world.free(v),status:'wild',team:null,stableId:null,riderId:null});v.horseId=null;}
+  if(v.hp<=0&&v.horseId){const h=this.horses?.find(h=>h.riderId===v.id);if(h){Object.assign(h,this.world.free(v));this.releaseHorse(h);}v.horseId=null;}
   return result;
  }
  workerStep(u,dt){
@@ -131,7 +155,7 @@ class EconomyBattle extends VillageBattle {
     if(dist(u,h)>35){this.move(u,h,dt);return;}j.elapsed+=dt;h.progress=j.elapsed/RIDING.captureSeconds;u.harvesting=false;u.walk+=dt*4;
     if(j.elapsed>=RIDING.captureSeconds){h.status='leading';j.phase='return';}return;
    }
-   const p=this.door(b);this.move(u,p,dt);h.x=u.x-22;h.y=u.y+10;h.movingUntil=u.movingUntil;h.stride=u.stride;
+   const p=this.door(b);this.move(u,p,dt);h.x=u.x-22;h.y=u.y+10;h.movingUntil=u.movingUntil;h.stride=u.stride;h.angle=u.angle;
    if(dist(u,p)<30){Object.assign(h,{...p,status:'stabled',handlerId:null,progress:1});u.job=null;u.order='hold';this.notify('พาม้าเข้าคอกแล้ว · เลือกทหารเพื่อขึ้นขี่');}return;
   }
   if(j?.type==='mount'){
@@ -158,9 +182,10 @@ class EconomyBattle extends VillageBattle {
   for(const u of this.alive().filter(u=>u.job?.type==='mount'))this.workerStep(u,dt);
   super.step(dt);
   for(const h of this.horses){
-   if(h.status==='mounted'){const u=this.units.find(u=>u.id===h.riderId&&u.hp>0);if(!u)Object.assign(h,{status:'wild',riderId:null,stableId:null,team:null});else{h.x=u.x;h.y=u.y;}}
-   if(['catching','leading'].includes(h.status)&&!this.units.some(u=>u.id===h.handlerId&&u.hp>0&&u.job?.type==='capture'))Object.assign(h,{status:'wild',handlerId:null,stableId:null,team:null});
-   if(h.status==='stabled'&&!this.structures.some(b=>b.id===h.stableId&&b.hp>0))Object.assign(h,{status:'wild',stableId:null,team:null});
+   if(h.status==='mounted'){const u=this.units.find(u=>u.id===h.riderId&&u.hp>0);if(!u)this.releaseHorse(h);else{h.x=u.x;h.y=u.y;}}
+   if(['catching','leading'].includes(h.status)&&!this.units.some(u=>u.id===h.handlerId&&u.hp>0&&u.job?.type==='capture'))this.releaseHorse(h);
+   if(h.status==='stabled'&&!this.structures.some(b=>b.id===h.stableId&&b.hp>0))this.releaseHorse(h);
+   if(h.status==='wild')this.wildHorseStep(h,dt);
   }
   for(const u of this.alive()){
    const camp=this.structures.find(b=>b.kind==='camp'&&b.complete&&b.hp>0&&b.team===u.team&&dist(b,u)<160);if(!camp)continue;

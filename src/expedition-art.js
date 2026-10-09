@@ -13,7 +13,7 @@ function drawExpeditionBody(u){
 function drawHorse(h){
  if(!['wild','catching','leading'].includes(h.status))return;
  const frame=(h.movingUntil||0)>game.t?Math.floor((h.stride||0)*.4)%4:4;
- ctx.save();ctx.translate(h.x,h.y);ellipse(ctx,0,1,25,8,'#0a160c77');expeditionSprite(ctx,0,frame,0,0,72);
+ ctx.save();ctx.translate(h.x,h.y);ellipse(ctx,0,1,25,8,'#0a160c77');expeditionSprite(ctx,0,frame,0,0,72,Math.cos(h.angle||0)<-.1);
  ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillStyle='#ecd7a5';ctx.fillText(h.status==='wild'?'ม้าป่า · คลิกขวาเพื่อจับ':h.status==='catching'?'กำลังจับ '+Math.floor(h.progress*100)+'%':'พากลับคอก',0,-72);
  if(h.status==='leading'){const u=game.units.find(u=>u.id===h.handlerId);if(u){ctx.strokeStyle='#bdac7d';ctx.beginPath();ctx.moveTo(20,-33);ctx.lineTo(u.x-h.x,u.y-h.y-18);ctx.stroke();}}ctx.restore();
 }
