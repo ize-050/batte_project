@@ -2,6 +2,6 @@
   "name": "four-clans-online", "version": "0.2.0", "private": true,
   "description": "Four-player browser RTS with an authoritative WebSocket server",
   "engines": {"node": ">=22"},
-  "scripts": {"build": "node build-village.cjs", "start": "node server.cjs", "test": "npm run build && node test-forest.cjs && node test-economy.cjs && node test-progression.cjs && node test-online.cjs && node test-ascension.cjs"},
+  "scripts": {"build": "node build-village.cjs", "start": "node server.cjs", "test": "npm run build && node test-forest.cjs && node test-economy.cjs && node test-progression.cjs && node test-online.cjs && node test-ascension.cjs && node test-combat-orders.cjs"},
   "dependencies": {"ws": "^8.18.3"}
 }

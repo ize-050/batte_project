@@ -58,8 +58,45 @@ class EconomyBattle extends Battle {
   warriors(team=this.player){return this.alive(team).filter(u=>!u.worker);}
   targets(team){return [...this.alive().filter(u=>u.team!==team),...this.structures.filter(b=>b.team!==team&&b.hp>0)];}
   updateVision(){super.updateVision();for(const b of this.structures||[]){if(b.team!==this.player||b.hp<=0||!b.complete)continue;const radius=b.kind==='tower'?(TOWER_LEVELS[b.level||1].range+70):280;for(let y=Math.max(0,Math.floor((b.y-radius)/CELL));y<=Math.min(ROWS-1,Math.ceil((b.y+radius)/CELL));y++)for(let x=Math.max(0,Math.floor((b.x-radius)/CELL));x<=Math.min(COLS-1,Math.ceil((b.x+radius)/CELL));x++){const i=y*COLS+x;if(dist(b,this.world.center(i))<=radius)this.visible[i]=this.seen[i]=1;}}}
-  nearest(u,r=260){if(u.worker&&u.job||u.job?.type==='train')return null;return super.nearest(u,r);}
-  move(u,p,dt){const oldX=u.x,oldY=u.y;const waypoint=u.path?.[0];if(waypoint){const dx=waypoint.x-u.x,dy=waypoint.y-u.y,d=Math.hypot(dx,dy);if(d>8){const vx=dx/d,vy=dy/d;const blocked=this.alive().some(v=>v.id!==u.id&&dist(u,v)<32&&(v.x-u.x)*vx+(v.y-u.y)*vy>0);if(blocked){const step=u.speed*dt*.95;let next={x:u.x-vy*step,y:u.y+vx*step};if(!this.world.walkable(next))next={x:u.x+vy*step,y:u.y-vx*step};if(this.world.walkable(next)){u.x=next.x;u.y=next.y;}}}}const done=super.move(u,p,dt);if(Math.hypot(u.x-oldX,u.y-oldY)>.01){u.movingUntil=this.t+.12;u.stride=(u.stride||0)+Math.hypot(u.x-oldX,u.y-oldY)*.22;}return done;}
+  acceptsTarget(u,v){return u.targetPriority==='units'?!v.building:u.targetPriority==='buildings'?!!v.building:true;}
+  targetDistance(u,v){return v.building?Math.hypot(Math.max(0,Math.abs(u.x-v.x)-(v.w||70)/2),Math.max(0,Math.abs(u.y-v.y)-(v.h||70)/2)):dist(u,v);}
+  attackPoint(u,v){
+    if(!v.building)return v;
+    // Approach a reachable edge, not the blocked center of a large building.
+    const points=[],radius=Math.max(v.w||70,v.h||70)/2+u.range+CELL;
+    for(let y=Math.max(0,Math.floor((v.y-radius)/CELL));y<=Math.min(ROWS-1,Math.ceil((v.y+radius)/CELL));y++)for(let x=Math.max(0,Math.floor((v.x-radius)/CELL));x<=Math.min(COLS-1,Math.ceil((v.x+radius)/CELL));x++){
+      const p=this.world.center(y*COLS+x);if(this.world.walkable(p)&&this.targetDistance(p,v)<=u.range)points.push(p);
+    }
+    points.sort((a,b)=>dist(a,u)-dist(b,u));
+    return points[0]||v;
+  }
+  nearest(u,r=260){
+    if(u.worker&&u.job||u.job?.type==='train')return null;
+    let best=null;for(const v of this.targets(u.team)){
+      if(!this.acceptsTarget(u,v)||(this.multiplayer?!this.canSee(u.team,v):u.team===this.player&&!this.visibleAt(v)))continue;
+      const d=this.targetDistance(u,v);if(d<r){r=d;best=v;}
+    }return best;
+  }
+  setTargetPriority(ids,priority){
+    if(!['auto','units','buildings'].includes(priority))return false;
+    let count=0;for(const u of this.warriors().filter(u=>ids.includes(u.id))){
+      u.targetPriority=priority;count++;
+      if(u.order==='target'){u.order='advance';u.dest=u.target?this.world.free(u.target):u.dest;u.target=null;u.path=[];u.repath=0;}
+    }return count>0;
+  }
+  trainingOptions(ids){
+    const units=this.warriors().filter(u=>ids.includes(u.id)),items=[];
+    for(const kind of Object.keys(TRAINING)){
+      const candidates=units.map(u=>({u,d:this.trainingRecipe(u,kind)})).filter(v=>v.d?.tier>1).sort((a,b)=>b.d.tier-a.d.tier||a.u.id-b.u.id);
+      if(!candidates.length)continue;const {u,d}=candidates[0];
+      const schools=this.structures.filter(b=>b.kind===kind&&b.team===this.player&&b.hp>0);
+      const b=schools.filter(b=>b.complete&&b.queue.length<3).sort((a,b)=>dist(a,u)-dist(b,u))[0];
+      const missing=!schools.length;
+      const reason=!b?(missing?'ต้องสร้าง '+BUILDINGS[kind].name:schools.some(b=>b.complete)?'คิวเต็ม · รอช่องว่าง':'อาคารกำลังก่อสร้าง'):!this.running?'เริ่มหรือเล่นเกมต่อก่อน':this.over?'การรบจบแล้ว':!this.affordable(d)?'ขาด '+Math.max(0,Math.ceil(d.rice-this.stock[this.player].rice))+' ข้าว / '+Math.max(0,Math.ceil(d.water-this.stock[this.player].water))+' น้ำ':'';
+      items.push({kind,d,b,u,missing,reason,enabled:!reason});
+    }return items;
+  }
+  move(u,p,dt,tolerance=8){const oldX=u.x,oldY=u.y;const waypoint=u.path?.[0];if(waypoint){const dx=waypoint.x-u.x,dy=waypoint.y-u.y,d=Math.hypot(dx,dy);if(d>8){const vx=dx/d,vy=dy/d;const blocked=this.alive().some(v=>v.id!==u.id&&dist(u,v)<32&&(v.x-u.x)*vx+(v.y-u.y)*vy>0);if(blocked){const step=u.speed*dt*.95;let next={x:u.x-vy*step,y:u.y+vx*step};if(!this.world.walkable(next))next={x:u.x+vy*step,y:u.y-vx*step};if(this.world.walkable(next)){u.x=next.x;u.y=next.y;}}}}const done=super.move(u,p,dt,tolerance);if(Math.hypot(u.x-oldX,u.y-oldY)>.01){u.movingUntil=this.t+.12;u.stride=(u.stride||0)+Math.hypot(u.x-oldX,u.y-oldY)*.22;}return done;}
   makeWorker(u){Object.assign(u,{worker:true,ranged:false,hp:110,max:110,damage:4,range:25,speed:94,cargo:0,cargoType:null,job:null,work:0,inTraining:false});}
   makeSoldier(u,ranged){const c=CLANS[u.team];Object.assign(u,{worker:false,ranged,className:ranged?'พลธนู':'นักดาบ',role:ranged?'archer':'sword',heroCooldown:0,form:null,awakened:0,venom:0,venomDps:0,tier:1,schools:[ranged?'archery':'dojo'],hp:ranged?130:c.hp,max:ranged?130:c.hp,damage:ranged?18:c.damage,range:ranged?180:31,speed:c.speed,job:null,inTraining:false,order:'hold',path:[],repath:0});}
   notify(text){this.events.push({id:++this.eventSerial,text,t:this.t});this.events=this.events.slice(-10);}
@@ -75,7 +112,7 @@ class EconomyBattle extends Battle {
   setJob(u,job){if(u.job?.type==='train')return false;u.harvesting=false;u.job=job;u.order=job?'work':'hold';u.dest=null;u.path=[];u.repath=0;u.work=0;return true;}
   assignGather(ids,resource){if(!resource)return 0;let n=0;for(const u of this.workers().filter(u=>ids.includes(u.id)))if(this.setJob(u,{type:'gather',resourceId:resource.id,phase:u.cargo?'return':'harvest'}))n++;return n;}
   assignBuild(ids,b){let n=0;for(const u of this.workers().filter(u=>ids.includes(u.id)))if(this.setJob(u,{type:'build',buildingId:b.id}))n++;return n;}
-  issue(ids,mode,p){const available=ids.filter(id=>{const u=this.units.find(u=>u.id===id);return u&&!u.inTraining&&u.job?.type!=='train';});for(const u of this.units.filter(u=>available.includes(u.id))){u.job=null;u.harvesting=false;}super.issue(available,mode,p);}
+  issue(ids,mode,p){const available=ids.filter(id=>{const u=this.units.find(u=>u.id===id);return u&&u.hp>0&&u.team===this.player&&!u.inTraining&&u.job?.type!=='train';});for(const u of this.units.filter(u=>available.includes(u.id))){u.job=null;u.harvesting=false;}super.issue(available,mode,p);}
   nearestStore(u){return this.structures.filter(b=>b.hp>0&&b.complete&&b.team===u.team&&['hq','hut','store'].includes(b.kind)).sort((a,b)=>dist(a,u)-dist(b,u))[0];}
   deposit(u,dt){const b=this.nearestStore(u);if(!b)return false;const p=this.door(b);if(!p)return false;if(dist(u,p)>22){this.move(u,p,dt);return false;}const cap=this.storage(u.team)[u.cargoType],r=this.stock[u.team],amount=Math.min(u.cargo,Math.max(0,cap-r[u.cargoType]));r[u.cargoType]+=amount;u.cargo-=amount;if(u.team===this.player)this.economyStats[u.cargoType]+=amount;if(amount)this.effect('text',u.x,u.y-35,u.cargoType==='rice'?'#f1d47f':'#95d9ec',1,'+'+Math.round(amount));if(u.cargo<.001){u.cargo=0;u.cargoType=null;return true;}return false;}
   trainingRecipe(u,kind){

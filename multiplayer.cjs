@@ -25,13 +25,6 @@ class MultiplayerBattle extends EconomyBattle {
   }
   refreshVision(){for(const team of this.activeTeams)this.asTeam(team,()=>this.updateVision());}
   canSee(team,p){return !!this.views?.[team].visible[this.world.cell(p)];}
-  nearest(u,r=260){
-    if (!this.views) return super.nearest(u,r);
-    if (u.worker&&u.job||u.job?.type==='train') return null;
-    let best=null;
-    for(const v of this.targets(u.team)){if(!this.canSee(u.team,v))continue;const d=dist(u,v)-(v.building?35:0);if(d<r){r=d;best=v;}}
-    return best;
-  }
   hit(u,amount,source,pierce=false){return this.views?this.asTeam(u.team,()=>super.hit(u,amount,source,pierce)):super.hit(u,amount,source,pierce);}
   notify(){} // Network command replies and state drive each client's messages.
   finishMatch(){const survivors=this.bases.filter(b=>this.activeTeams.includes(b.team)&&b.hp>0);this.over=survivors.length<=1;this.winner=this.over?(survivors[0]?.team??null):null;if(this.over)this.running=false;}
@@ -62,6 +55,7 @@ class MultiplayerBattle extends EconomyBattle {
           else if(c.mode!=='hold'&&!p)throw new Error('กรุณาเลือกปลายทาง');
           this.issue(ids,c.mode,target);result=true;break;
         }
+        case 'targetPriority':if(!['auto','units','buildings'].includes(c.priority))throw new Error('ประเภทเป้าหมายไม่ถูกต้อง');result=this.setTargetPriority(ids,c.priority);break;
         case 'gather':{const r=this.resources.find(r=>r.id===c.resourceId&&this.visibleAt(r));if(!r)throw new Error('ยังไม่พบแหล่งทรัพยากร');result=this.assignGather(ids,r);break;}
         case 'build':if(!p||!Object.hasOwn(BUILDINGS,c.kind))throw new Error('เลือกอาคารและตำแหน่ง');result=this.build(c.kind,p,ids);break;
         case 'assignBuild':{const b=building();if(b.complete)throw new Error('อาคารสร้างเสร็จแล้ว');result=this.assignBuild(ids,b);break;}

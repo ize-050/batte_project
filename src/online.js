@@ -44,6 +44,7 @@ online=(()=>{
   send({type:'command',requestId:++requestId,command:{action,...args}});return true;
  }
  function attachControls(){
+  game.setTargetPriority=(ids,priority)=>command('targetPriority',{ids,priority});
   game.issue=(ids,mode,p)=>command('issue',{ids,mode,...(mode==='target'?{targetId:p?.id}:{point:p})});
   game.assignGather=(ids,r)=>r&&command('gather',{ids,resourceId:r.id})?ids.length:0;
   game.assignBuild=(ids,b)=>command('assignBuild',{ids,buildingId:b?.id});
