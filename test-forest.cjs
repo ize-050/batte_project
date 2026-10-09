@@ -1,0 +1,36 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const html = fs.readFileSync(path.join(__dirname, 'forest-rts.html'), 'utf8');
+const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+new Function(script);
+const source = script.split('// ENGINE-BEGIN')[1].split('// ENGINE-END')[0];
+const { World, Camera, Battle, STARTS, W, H, dist } = new Function(source + '; return {World,Camera,Battle,STARTS,W,H,dist};')();
+const world = new World();
+const routeGame=new Battle(0,world),traveler=routeGame.alive(0)[0];
+const destination={x:1900,y:480};let arrived=false;
+for(let i=0;i<1800&&!arrived;i++)arrived=routeGame.move(traveler,destination,.05);
+assert(arrived,'unit must finish a move across the river at a non-grid-centered destination');
+assert(dist(traveler,world.free(destination))<8);
+for (let a = 0; a < 4; a++) for (let b = a + 1; b < 4; b++) {
+  const route = world.path(STARTS[a], STARTS[b]);
+  assert(route.length, 'every base must be reachable');
+  assert(route.every(p => world.walkable(p) && !world.water(p)), 'route must avoid forest and water');
+}
+const cam = new Camera(1000,470);cam.center({x:1600,y:1200});
+const cursor = {x:330,y:170}, before = cam.world(cursor);
+cam.scale(1.5,cursor);assert(dist(before,cam.world(cursor))<.001,'zoom must preserve point under cursor');
+cam.center({x:W,y:H});assert(cam.x+cam.w/cam.zoom<=W+.01);assert(cam.y+cam.h/cam.zoom<=H+.01);
+cam.center({x:0,y:0});assert.equal(cam.x,0);assert.equal(cam.y,0);
+let g=new Battle(0,world);const scout=g.alive(0)[0],original={x:scout.x,y:scout.y};
+assert(g.visibleAt(scout));assert(!g.visibleAt(STARTS[2]),'distant enemy must be hidden');
+scout.x=1500;scout.y=1200;g.updateVision();assert(g.visibleAt(scout));
+scout.x=original.x;scout.y=original.y;g.updateVision();assert(!g.visibleAt({x:1500,y:1200}));assert(g.seen[world.cell({x:1500,y:1200})],'explored land must persist');
+g.running=true;assert(g.cast(0));const hp=scout.hp;g.hit(scout,100,null);assert.equal(hp-scout.hp,35);assert(!g.cast(0));assert.equal(g.alerts.length,1);g.hit(scout,1,null);assert.equal(g.alerts.length,1,'alerts must be throttled');
+g=new Battle(2,world);g.running=true;const healer=g.alive(2)[0];healer.hp=30;healer.poison=2;assert(g.cast(2,[healer.id]));assert.equal(healer.hp,85);assert.equal(healer.poison,0);
+g=new Battle(1,world);g.running=true;const snake=g.alive(1)[0],victim=g.alive(0)[0];victim.x=snake.x+50;victim.y=snake.y;victim.order='hold';victim.range=0;victim.damage=0;const vh=victim.hp,sh=snake.hp;assert(g.cast(1,[snake.id],victim));for(let i=0;i<10;i++)g.step(.05);assert(victim.hp<vh);assert.equal(snake.hp,sh);
+g=new Battle(3,world);g.running=true;const wolf=g.alive(3)[0],target=g.alive(0)[0];target.x=wolf.x+80;target.y=wolf.y;g.updateVision();const th=target.hp;assert(g.cast(3,[wolf.id]));assert.equal(target.hp,th-30);
+g=new Battle(0,world);const x=g.units[0].x;g.step(.05);assert.equal(g.t,0);assert.equal(g.units[0].x,x);g.running=true;
+const startTime=performance.now();for(let i=0;i<1200;i++)g.step(.05);
+assert(g.alertSerial>0,'opening raid must cause genuine attack alerts');assert(g.stats.hits>0&&g.stats.shots>0,'combat must include damage and projectiles');assert(g.units.every(u=>Number.isFinite(u.x)&&world.walkable(u)&&u.hp>=0),'units must remain on navigable terrain');
+console.log(JSON.stringify({checks:'camera, all-base pathfinding, river crossings, fog/exploration, shield, heal, poison, dash, alerts, combat, pause',simulationSeconds:g.t,elapsedMs:Math.round(performance.now()-startTime),alerts:g.alertSerial,stats:g.stats},null,2));

@@ -1,0 +1,36 @@
+# Dependencies and generated builds (npm run build recreates these)
+node_modules/
+/dist/
+/forest-rts.html
+/battle-preview.html
+coverage/
+.cache/
+
+# Local configuration and secrets; keep the documented template
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs, editor settings and OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Historical local experiments, not used by the current build/test scripts
+/test-combat.cjs
+/combat-arena-backup.html
+/stitch-reference.html
+/responsive-preview.html
+/src/render-economy-backup.js
+/src/shell-economy-backup.html
+
+# Keep forest-rts-v2-backup.html: it supplies the shared engine and renderer.
+# Keep assets (PNG sources and runtime WebP) and documentation screenshots.

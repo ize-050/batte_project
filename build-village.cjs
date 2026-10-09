@@ -1,0 +1,20 @@
+const fs=require('node:fs'),path=require('node:path');
+const read=p=>fs.readFileSync(path.join(__dirname,p),'utf8');
+const base=read('forest-rts-v2-backup.html');
+const engine=require('./engine-source.cjs')();
+const rendering=base.slice(base.indexOf('function ellipse('),base.indexOf('function inView(')).replace('function drawUnit(u){','function drawUnit(u){if(richUnit(u))return;');
+const artData='const ART_ATLAS="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/jungle-atlas.webp')).toString('base64')+'",ART_GROUND="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/forest-floor.webp')).toString('base64')+'",ART_POND="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/pond.webp')).toString('base64')+'";';
+const formData='const ART_FORMS="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/ascension-atlas.webp')).toString('base64')+'";';
+const script='(()=>{\n// ENGINE-BEGIN\n'+engine+'\n// ENGINE-END\n'+read('src/controller.js')+'\n'+artData+'\nconst ART_WALK="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/walk-cycle.webp')).toString('base64')+'";\n'+formData+'\n'+read('src/forms-art.js')+'\n'+read('src/art.js')+'\n'+rendering+'\n'+read('src/render.js')+'\n'+read('src/online.js')+'\n})();';
+new Function(script);
+const html=read('src/shell.html')+'<style>'+read('src/stitch-theme.css')+'</style>'+ '\n<script>\n'+script+'\n</script>\n';
+fs.writeFileSync(path.join(__dirname,'forest-rts.html'),html);
+fs.writeFileSync(path.join(__dirname,'battle-preview.html'),'<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Four Clans · Village & Battle</title><style>body{margin:0;background:#040c08;padding:8px}main{max-width:1440px;margin:auto}.cursor-interaction{cursor:pointer}@media(max-width:450px){body{padding:0}}</style></head><body><main>'+html+'</main></body></html>');
+console.log('Built village prototype: '+html.length+' characters');
+
+const dist=path.join(__dirname,'dist');fs.mkdirSync(dist,{recursive:true});
+let page=fs.readFileSync(path.join(__dirname,'battle-preview.html'),'utf8');
+const wsURL=process.env.PUBLIC_WS_URL||'';
+if(wsURL&&!/^wss?:\/\//.test(wsURL))throw new Error('PUBLIC_WS_URL must use ws:// or wss://');
+page=page.replace('<head>','<head><script>window.FOUR_CLANS_WS='+JSON.stringify(wsURL).replace(/</g,'\\u003c')+';</script>');
+fs.writeFileSync(path.join(dist,'index.html'),page);
