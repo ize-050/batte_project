@@ -11,7 +11,7 @@ online=(()=>{
  function updateHUD(){
   if(!api.active)return;
   $('start').disabled=true;$('start').textContent=api.inMatch?'ออนไลน์ · '+latency+' ms':'รอในห้อง';
-  for(const id of ['clan','reset','showcase','raid'])$(id).disabled=true;
+  for(const id of ['clan','reset','showcase','expedition-demo','raid'])$(id).disabled=true;
   $('online-open').textContent=(api.connected?'● ':'○ ')+(lobby?.code||'กำลังเชื่อมต่อ');
   $('objective').textContent=api.inMatch?'ทำลายศาลาบัญชาการฝ่ายอื่น · ห้อง '+(lobby?.code||''):'รอเพื่อนและกดพร้อมรบในห้อง';
   root.querySelector('.r-prototype small').textContent=api.connected?'ONLINE · SERVER SYNC':'RECONNECTING';
@@ -44,6 +44,10 @@ online=(()=>{
   send({type:'command',requestId:++requestId,command:{action,...args}});return true;
  }
  function attachControls(){
+  game.captureHorse=(ids,horseId)=>({ok:command('captureHorse',{ids,horseId}),reason:'ยังไม่เชื่อมต่อ'});
+  game.mount=(ids,buildingId)=>({ok:command('mount',{ids,buildingId}),reason:'ยังไม่เชื่อมต่อ'});
+  game.trainSpecial=(b,ids,role)=>({ok:command('trainSpecial',{ids,buildingId:b?.id,role}),reason:'ยังไม่เชื่อมต่อ'});
+  for(const name of ['dismount','sprint','toggleStealth','sabotage'])game[name]=ids=>command(name,{ids});
   game.setTargetPriority=(ids,priority)=>command('targetPriority',{ids,priority});
   game.issue=(ids,mode,p)=>command('issue',{ids,mode,...(mode==='target'?{targetId:p?.id}:{point:p})});
   game.assignGather=(ids,r)=>r&&command('gather',{ids,resourceId:r.id})?ids.length:0;

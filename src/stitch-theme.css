@@ -67,3 +67,5 @@
 #forest-rts .r-target-control select{flex:1;min-width:0;background:#14271d;color:#f4e4b4;border:1px solid #7d7953;padding:8px;border-radius:3px}
 #forest-rts .r-combat-hint{display:block;font-size:11px;line-height:1.6;color:#bac8ad;margin:6px 0}
 #forest-rts .r-training-options button:disabled{opacity:.7}
+
+#forest-rts #r-expedition-controls{border-top:1px solid #6c6748;margin-top:8px;padding-top:7px}#forest-rts #r-expedition-stock{color:#ecd3a0;font-size:12px}#forest-rts #r-expedition-controls .r-job-buttons{display:flex;flex-wrap:wrap;margin-top:6px}#forest-rts #r-expedition-controls button{padding:7px;flex:1 1 85px;font-size:11px}#forest-rts #r-special-training{font-size:11px;color:#d5c698;padding:8px 0}#forest-rts #r-special-training summary{cursor:pointer;padding-bottom:7px}#forest-rts #r-special-training small{line-height:1.6;color:#afbea4}

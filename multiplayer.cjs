@@ -55,6 +55,13 @@ class MultiplayerBattle extends EconomyBattle {
           else if(c.mode!=='hold'&&!p)throw new Error('กรุณาเลือกปลายทาง');
           this.issue(ids,c.mode,target);result=true;break;
         }
+        case 'captureHorse':result=this.captureHorse(ids,c.horseId);break;
+        case 'mount':result=this.mount(ids,building().id);break;
+        case 'dismount':result=this.dismount(ids);break;
+        case 'sprint':result=this.sprint(ids);break;
+        case 'toggleStealth':result=this.toggleStealth(ids);break;
+        case 'sabotage':result=this.sabotage(ids);break;
+        case 'trainSpecial':result=this.trainSpecial(building(),ids,c.role);break;
         case 'targetPriority':if(!['auto','units','buildings'].includes(c.priority))throw new Error('ประเภทเป้าหมายไม่ถูกต้อง');result=this.setTargetPriority(ids,c.priority);break;
         case 'gather':{const r=this.resources.find(r=>r.id===c.resourceId&&this.visibleAt(r));if(!r)throw new Error('ยังไม่พบแหล่งทรัพยากร');result=this.assignGather(ids,r);break;}
         case 'build':if(!p||!Object.hasOwn(BUILDINGS,c.kind))throw new Error('เลือกอาคารและตำแหน่ง');result=this.build(c.kind,p,ids);break;
@@ -75,13 +82,14 @@ class MultiplayerBattle extends EconomyBattle {
   }
   snapshot(team){return this.asTeam(team,()=>{
     const visible=p=>this.visibleAt(p);
-    const units=this.units.filter(u=>u.team===team||(!u.inTraining&&visible(u))).map(u=>{
-      const v=copy(u);if(u.team!==team){delete v.job;delete v.dest;delete v.goalCell;delete v.cargo;delete v.cargoType;}return v;
+    const units=this.units.filter(u=>u.team===team||this.observable(team,u)).map(u=>{
+      const v=copy(u);if(u.team!==team){delete v.job;delete v.resumeJob;delete v.dest;delete v.goalCell;delete v.cargo;delete v.cargoType;}return v;
     });
     const structures=this.structures.filter(b=>b.team===team||visible(b)).map(b=>{const v=copy(b);if(b.team!==team){v.queue=[];delete v.spawn;delete v.upgrading;}return v;});
     // Spawn locations and defeated teams are public; hidden HQ health is not.
     const bases=this.bases.map(b=>b.team===team||visible(b)?copy(b):{id:b.id,team:b.team,x:b.x,y:b.y,hp:b.hp>0?1800:0,max:1800,kind:'hq',building:true,complete:true,w:110,h:80,queue:[]});
     return {t:this.t,over:this.over,winner:this.winner,running:this.running,started:true,units,structures,bases,
+      horses:copy(this.horses.filter(h=>h.team===team||(['wild','catching','leading'].includes(h.status)&&visible(h)))),
       resources:copy(this.resources.filter(r=>r.team===team||visible(r))),
       stock:this.stock.map((s,i)=>i===team?copy(s):{rice:0,water:0}),
       cooldowns:this.cooldowns.map((v,i)=>i===team?v:0),volleys:this.volleys.map((v,i)=>i===team?v:0),

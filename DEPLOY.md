@@ -27,7 +27,7 @@ npm start
 
 แนะนำสร้าง repository สำหรับเกมนี้ แล้วนำ **เนื้อหาในโฟลเดอร์ `four-clans-design`** ไปเป็นราก repository เพื่อไม่ต้องอัปโหลดโปรเจกต์อื่นใน Playground
 
-ไฟล์ที่จำเป็น: `package.json`, `package-lock.json`, `.node-version`, `.gitignore`, `server.cjs`, `multiplayer.cjs`, `engine-source.cjs`, `build-village.cjs`, `forest-rts-v2-backup.html`, โฟลเดอร์ `src/` และไฟล์ใน `assets/`: `jungle-atlas.webp`, `forest-floor.webp`, `pond.webp`, `walk-cycle.webp`, `ascension-atlas.webp` พร้อมไฟล์ทดสอบ `test-*.cjs` และเอกสารนี้
+ไฟล์ที่จำเป็น: `package.json`, `package-lock.json`, `.node-version`, `.gitignore`, `server.cjs`, `multiplayer.cjs`, `engine-source.cjs`, `build-village.cjs`, `forest-rts-v2-backup.html`, โฟลเดอร์ `src/` และไฟล์ใน `assets/`: `jungle-atlas.webp`, `forest-floor.webp`, `pond.webp`, `walk-cycle.webp`, `ascension-atlas.webp`, `expedition-atlas.webp` พร้อมไฟล์ทดสอบ `test-*.cjs` และเอกสารนี้
 
 ไม่ต้องอัปโหลด `node_modules/`, `.env`, รูป QA หรือ `dist/` ระบบ build จะสร้าง `dist/index.html` ให้ใหม่ ไม่ต้องใช้ฐานข้อมูลสำหรับห้องแบบชั่วคราวนี้
 
@@ -126,7 +126,7 @@ Render Free พักบริการเมื่อไม่มี traffic �
 
 - `server.cjs`: HTTP, WebSocket, lobby, session/reconnect, room lifecycle และ origin validation
 - `multiplayer.cjs`: เกมกลาง, ตรวจคำสั่ง, หมอกสงครามแยกผู้เล่น, ตัดข้อมูลศัตรูที่ยังมองไม่เห็น
-- `engine-source.cjs` + `src/economy.js`: engine ร่วมกับโหมดเล่นในเครื่อง
+- `engine-source.cjs` + `src/economy.js` + `src/expedition.js`: engine ร่วมกับโหมดเล่นในเครื่อง
 - `src/online.js`: หน้าห้อง, ส่งคำสั่ง, รับ snapshot, ประสาน HUD และการแสดงภาพเดิน
 - `npm test`: ทดสอบเกมเดิมและ WebSocket clients จริง 4 ตัว; ต้องอนุญาตให้ Node เปิด localhost port ชั่วคราว
 
