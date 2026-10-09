@@ -29,7 +29,7 @@ for(let team=0;team<4;team++){
  assert.throws(()=>g.command(0,{action:'targetPriority',ids:[enemy.id],priority:'units'}));
  assert.throws(()=>g.command(0,{action:'targetPriority',ids:[u.id],priority:'invalid'}));
  g.command(0,{action:'targetPriority',ids:[u.id],priority:'buildings'});assert.equal(g.snapshot(0).units.find(v=>v.id===u.id).targetPriority,'buildings');
- Object.assign(u,{x:2600,y:380});g.refreshVision();assert(g.nearest(u)?.building);
+ Object.assign(u,{x:g.bases[1].x-220,y:g.bases[1].y});g.refreshVision();assert(g.nearest(u)?.building);
  g.views[0].visible.fill(0);assert.equal(g.nearest(u),null,'priority cannot target hidden buildings');
 }
 console.log('PASS combat orders: filters, direct override, melee tower edge for four clans, retargeting, move vs attack-move, mixed-tier promotion guidance, online ownership and fog');

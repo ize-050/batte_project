@@ -58,7 +58,8 @@ class VillageBattle extends Battle {
     this.rebuildObstacles();this.addNeutralRice();this.updateVision();
   }
   addNeutralRice(){
-    for(const [i,site] of RICE_SITES.entries()){
+    for(const [i,original] of RICE_SITES.entries()){
+      const site={...original,x:original.x*W/3200,y:original.y*H/2400};
       const candidates=[];
       for(let y=site.y-280;y<=site.y+280;y+=20)for(let x=site.x-280;x<=site.x+280;x+=20)candidates.push({x,y});
       candidates.sort((a,b)=>dist(a,site)-dist(b,site));

@@ -47,7 +47,13 @@ function richPortrait(item){if(!artReady||!item)return false;const g=pc.createLi
 function richTree(c,p){if(!artReady)return false;const index=Math.floor(p.x*3+p.y)%9===0?1:Math.floor(p.x+p.y)%4===0?2:0;const w=p.s*3.2;ellipse(c,p.x+13,p.y+4,w*.35,w*.14,'#05130970');sprite(c,index,p.x,p.y+8,w,w*(index===1?1.45:1.03));return true;}
 function paintRichTerrain(){if(!artReady||!groundReady)return;const noise=seeded(3185);tc.clearRect(0,0,W,H);for(let y=0;y<H;y+=400)for(let x=0;x<W;x+=400){tc.save();tc.translate(x+200,y+200);tc.rotate(((x/400+y/400)%4)*Math.PI/2);tc.drawImage(groundArt,-200,-200,400,400);tc.restore();}tc.fillStyle='#30412b48';tc.fillRect(0,0,W,H);
  // Worn paths follow the same routes as the navigable map.
- const paths=[[{x:380,y:380},{x:800,y:480},{x:2400,y:480},{x:2820,y:380}],[{x:380,y:2020},{x:800,y:1920},{x:2400,y:1920},{x:2820,y:2020}],[{x:380,y:380},{x:260,y:1000},{x:760,y:1200},{x:1240,y:1510},{x:960,y:1730},{x:380,y:2020}],[{x:2820,y:380},{x:2990,y:900},{x:2800,y:1220},{x:2320,y:1200},{x:2820,y:2020}],[{x:760,y:1200},{x:2440,y:1200}]];
+ const paths=[
+  [STARTS[0],{x:800,y:BRIDGES[0]},{x:W-800,y:BRIDGES[0]},STARTS[1]],
+  [STARTS[3],{x:800,y:BRIDGES[2]},{x:W-800,y:BRIDGES[2]},STARTS[2]],
+  [STARTS[0],{x:260,y:H*.4},{x:760,y:H/2},{x:1100,y:H*.64},STARTS[3]],
+  [STARTS[1],{x:W-260,y:H*.4},{x:W-760,y:H/2},{x:W-1100,y:H*.64},STARTS[2]],
+  [{x:760,y:H/2},{x:W-760,y:H/2}]
+ ];
  for(const points of paths){tc.lineCap='round';tc.lineJoin='round';for(const [width,color]of [[100,'#463f2855'],[72,'#86744b50'],[46,'#aa95603a']]){tc.beginPath();points.forEach((p,i)=>i?tc.lineTo(p.x,p.y):tc.moveTo(p.x,p.y));tc.lineWidth=width;tc.strokeStyle=color;tc.stroke();}}
  for(const b of STARTS){const g=tc.createRadialGradient(b.x,b.y,15,b.x,b.y,210);g.addColorStop(0,'#b7995c66');g.addColorStop(1,'#94804c00');tc.fillStyle=g;tc.fillRect(b.x-220,b.y-220,440,440);}
  tc.beginPath();for(let y=-20;y<H+20;y+=10){const x=riverX(y);y===-20?tc.moveTo(x,y):tc.lineTo(x,y);}for(const [w,col]of [[185,'#273a2b'],[163,'#6b6c47'],[145,'#465c4e'],[115,'#344e47'],[68,'#384a3b']]){tc.lineWidth=w;tc.strokeStyle=col;tc.stroke();}for(let i=0;i<1600;i++){const y=noise()*H,x=riverX(y)+(noise()-.5)*132;tc.strokeStyle=i%4?'#a4ae8425':'#d2caa841';tc.lineWidth=.5+noise();tc.beginPath();tc.moveTo(x,y);tc.lineTo(x+2+noise()*8,y+5+noise()*20);tc.stroke();}

@@ -17,10 +17,10 @@
 <script>
 (()=>{
 // ENGINE-BEGIN
-const W=3200,H=2400,CELL=40,COLS=W/CELL,ROWS=H/CELL;
+const W=3520,H=2640,CELL=40,COLS=W/CELL,ROWS=H/CELL;
 const CLANS=[{name:'พยัคฆ์',color:'#e99677',dark:'#7c3828',skill:'กำแพงโล่',desc:'ลดดาเมจ 65% นาน 5 วิ',hp:200,speed:76,damage:19,cd:14},{name:'อสรพิษ',color:'#b0d783',dark:'#3d6437',skill:'หมอกพิษ',desc:'เลือกจุด · พิษ 9 HP/วิ นาน 6 วิ',hp:155,speed:89,damage:17,cd:13},{name:'กระเรียน',color:'#a6d7f6',dark:'#345e78',skill:'ชำระและรักษา',desc:'รักษา 55 HP · ล้างพิษรอบตัว',hp:175,speed:80,damage:17,cd:14},{name:'หมาป่า',color:'#edca88',dark:'#77613b',skill:'พุ่งขย้ำ',desc:'พุ่งเข้าประชิด · ดาเมจ 30',hp:190,speed:85,damage:20,cd:12}];
-const STARTS=[{x:380,y:380},{x:2820,y:380},{x:2820,y:2020},{x:380,y:2020}],BRIDGES=[480,1200,1920],EXPANSIONS=[{x:940,y:680},{x:2220,y:730},{x:2250,y:1700},{x:960,y:1730}];
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),riverX=y=>1600+Math.sin(y/310)*145;
+const STARTS=[{x:380,y:380},{x:W-380,y:380},{x:W-380,y:H-380},{x:380,y:H-380}],BRIDGES=[480,H/2,H-480],EXPANSIONS=[{x:940,y:680},{x:2220,y:730},{x:2250,y:1700},{x:960,y:1730}];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),riverX=y=>W/2+Math.sin(y/310)*145;
 function seeded(seed){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 class World{
  constructor(){this.blocked=new Uint8Array(COLS*ROWS);this.trees=[];const rng=seeded(9451);this.clusters=[{x:690,y:960,r:185},{x:1200,y:300,r:150},{x:1100,y:1140,r:180},{x:430,y:1570,r:160},{x:1320,y:2110,r:165},{x:2100,y:340,r:165},{x:2520,y:1010,r:200},{x:2160,y:1280,r:145},{x:2550,y:1590,r:155},{x:1950,y:2090,r:120}];for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const p={x:x*CELL+20,y:y*CELL+20};this.blocked[y*COLS+x]=this.water(p)||this.clusters.some(c=>dist(c,p)<c.r)?1:0;}for(let i=0;i<3900;i++){const p={x:30+rng()*(W-60),y:40+rng()*(H-80)};const dense=this.clusters.some(c=>dist(c,p)<c.r+30),edge=p.x<100||p.x>W-100||p.y<100||p.y>H-100;if((dense||edge)&&!this.water(p))this.trees.push({...p,s:17+rng()*18});}this.trees.sort((a,b)=>a.y-b.y);}
@@ -37,7 +37,7 @@ class Camera{
  center(p){this.x=p.x-this.w/this.zoom/2;this.y=p.y-this.h/this.zoom/2;this.clamp();}
  world(p){return{x:this.x+p.x/this.zoom,y:this.y+p.y/this.zoom};}
  screen(p){return{x:(p.x-this.x)*this.zoom,y:(p.y-this.y)*this.zoom};}
- scale(z,p={x:this.w/2,y:this.h/2}){const before=this.world(p);this.zoom=clamp(z,.65,1.8);this.x=before.x-p.x/this.zoom;this.y=before.y-p.y/this.zoom;this.clamp();}
+ scale(z,p={x:this.w/2,y:this.h/2}){const before=this.world(p);this.zoom=clamp(z,.45,1.8);this.x=before.x-p.x/this.zoom;this.y=before.y-p.y/this.zoom;this.clamp();}
 }
 class Battle{
  constructor(player=0,world=new World()){this.world=world;this.player=player;this.t=0;this.running=false;this.started=false;this.over=false;this.units=[];this.bases=STARTS.map((p,team)=>({...p,team,hp:1800,max:1800,building:true,attack:0,flash:0}));this.projectiles=[];this.effects=[];this.zones=[];this.alerts=[];this.alertSerial=0;this.lastAlert=-99;this.cooldowns=[0,0,0,0];this.volleys=[0,0,0,0];this.aiWait=[4,5,6,7];this.seen=new Uint8Array(COLS*ROWS);this.visible=new Uint8Array(COLS*ROWS);this.fogTimer=0;this.stats={hits:0,shots:0,deaths:0};let id=0;for(let team=0;team<4;team++)for(let i=0;i<10;i++){const c=CLANS[team],b=STARTS[team],ranged=i>=7,p=world.free({x:b.x+(team===1||team===2?-155:155)+(i%4)*34,y:b.y+30+Math.floor(i/4)*40});this.units.push({id:id++,team,ranged,...p,hp:ranged?130:c.hp,max:ranged?130:c.hp,speed:c.speed,damage:ranged?18:c.damage,range:ranged?180:31,attack:0,shield:0,poison:0,immune:0,flash:0,anim:0,walk:0,angle:0,order:team===player?'hold':'advance',dest:{x:1500+(team%2)*200,y:BRIDGES[team===0||team===1?0:2]},path:[],repath:0,target:null});}const home=STARTS[player],raiders=this.alive((player+1)%4).slice(0,4),sign=home.x<W/2?1:-1;raiders.forEach((u,i)=>{Object.assign(u,world.free({x:home.x+sign*(660+(i%2)*42),y:home.y+Math.floor(i/2)*44}));u.dest={x:home.x,y:home.y};u.raid=true;});this.updateVision();}

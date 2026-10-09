@@ -13,7 +13,9 @@ const RIDING={cost:{rice:25,water:10},speed:[145,155,170,150],captureSeconds:4};
 class EconomyBattle extends VillageBattle {
  constructor(player=0,world=new World()){
   super(player,world);
-  this.horses=STARTS.flatMap((b,team)=>Array.from({length:3},(_,i)=>({id:'horse-'+team+'-'+i,...world.free({x:b.x+(b.x<W/2?1:-1)*(300+i*45),y:b.y+(b.y<H/2?170:-170)}),status:'wild',team:null,handlerId:null,stableId:null,riderId:null,progress:0})));
+  const sites=STARTS.flatMap((b,team)=>Array.from({length:3},(_,i)=>({id:'horse-'+team+'-'+i,site:i===2?'flank':'home',x:i===2?(b.x<W/2?W*.26:W*.74):b.x+(b.x<W/2?1:-1)*(300+i*45),y:i===2?(b.y<H/2?H*.32:H*.68):b.y+(b.y<H/2?170:-170)})));
+  for(let q=0;q<4;q++)for(let i=0;i<2;i++)sites.push({id:'horse-center-'+q+'-'+i,site:'center',x:W*(q%2?.61:.39)+i*50,y:H*(q<2?.42:.58)});
+  this.horses=sites.map(site=>({...site,...world.free(site),status:'wild',team:null,handlerId:null,stableId:null,riderId:null,progress:0}));
   this.horseRandom=seeded(7319);
   this.horses.forEach((h,i)=>{this.releaseHorse(h);h.roamWait=1+(i%3)*.8;});
  }

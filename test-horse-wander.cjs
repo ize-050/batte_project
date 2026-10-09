@@ -14,7 +14,7 @@ function quiet(g){g.running=true;g.aiWait.fill(Infinity);for(const b of g.struct
    if(moved.has(h.id)&&h.roamWait>0)rested.add(h.id);
   }
  }
- assert.equal(moved.size,12);assert.equal(rested.size,12);
+ assert.equal(moved.size,20);assert.equal(rested.size,20);
  const paused=JSON.stringify(g.horses);g.running=false;tick(g,3);assert.equal(JSON.stringify(g.horses),paused);
  g.running=true;g.over=true;tick(g,3);assert.equal(JSON.stringify(g.horses),paused);
 }
@@ -38,4 +38,4 @@ function quiet(g){g.running=true;g.aiWait.fill(Infinity);for(const b of g.struct
  assert(a&&b);assert.equal(a.x,b.x);assert.equal(a.y,b.y);assert.equal(a.stride,b.stride);assert.equal(a.angle,b.angle);
  assert(!g.snapshot(2).horses.some(v=>v.id===h.id),'horse remains hidden outside sight');
 }
-console.log('PASS wild horses: all 12 walk/rest within herd, avoid obstacles, pause/end freeze, capture/cancel/stable/release, shared server positions and fog');
+console.log('PASS wild horses: all 20 walk/rest within herd, avoid obstacles, pause/end freeze, capture/cancel/stable/release, shared server positions and fog');
