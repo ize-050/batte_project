@@ -187,8 +187,22 @@ class VillageBattle extends Battle {
     u.awakened=[6,10,6,8][u.team];u.heroCooldown=30;u.anim=.3;
     this.effect('ascend',u.x,u.y,CLANS[u.team].color,1.1,HERO_SKILLS[u.team]);this.notify(HERO_SKILLS[u.team]+'!');return true;
   }
+  recordCombat(kind,point,source,target){
+    this.combatSerial=(this.combatSerial||0)+1;
+    const voice=source.combatVoice||(source.special==='siege'?'siege':source.form||((source.ranged||kind==='shot')?'bow':source.worker?'worker':'blade'));
+    const event={id:this.combatSerial,t:this.t,x:point.x,y:point.y,kind,voice,team:source.team,targetTeam:target.team};
+    this.combatEvents=[...(this.combatEvents||[]).filter(e=>this.t-e.t<.8),event].slice(-96);
+    if(kind==='shot')return;
+    const x=Math.min(W-1,Math.floor(point.x/240)*240+120),y=Math.min(H-1,Math.floor(point.y/240)*240+120),id=x+':'+y;
+    this.combatZones=(this.combatZones||[]).filter(e=>this.t-e.t<6);
+    let zone=this.combatZones.find(e=>e.id===id);
+    if(!zone){zone={id,x,y,t:this.t,teams:[]};this.combatZones.push(zone);}
+    zone.t=this.t;zone.teams=[...new Set([...zone.teams,source.team,target.team])];
+    this.combatZones=this.combatZones.slice(-32);
+  }
+  battleSignals(team=this.player){return (this.combatZones||[]).filter(e=>this.t-e.t<6).map(e=>({id:e.id,x:e.x,y:e.y,t:e.t,own:e.teams.includes(team)}));}
   shoot(u,target,damage=u.damage){
-    super.shoot(u,target,damage);const p=this.projectiles.at(-1);
+    this.recordCombat('shot',u,u,target);super.shoot(u,target,damage);const p=this.projectiles.at(-1);if(p)p.combatVoice=u.special==='siege'?'siege':u.form||'bow';
     if(p&&u.form){p.form=u.form;p.awakened=u.awakened||0;}
   }
   formStep(dt){
@@ -212,7 +226,7 @@ class VillageBattle extends Battle {
     if(!pierce&&source?.team!==u.team&&source?.form==='wolf'&&source.awakened>0)amount*=1.25;
     if(!pierce&&u.form==='tiger')amount*=.85;
     if(!pierce&&!u.building&&u.form!=='crane'&&u.immune<=0&&source?.form==='naga'&&source.team!==u.team&&amount>0){u.venom=3;u.venomDps=source.awakened>0?6:3;u.poison=Math.max(u.poison,3);}
-    const isBuilding=u.building,isHQ=u.kind==='hq';if(isBuilding&&!isHQ)u.building=false;const value=super.hit(u,amount,source,pierce);u.building=isBuilding;if(u.hp===0){if(isBuilding){while(u.queue?.length)this.cancelTraining(u);if(isHQ)for(const b of this.structures.filter(b=>b.team===u.team))b.hp=0;this.rebuildObstacles();}else if(u.job?.type==='train'){const b=this.structures.find(b=>b.id===u.job.buildingId);if(b)b.queue=b.queue.filter(q=>q.unitId!==u.id);}}return value;}
+    const isBuilding=u.building,isHQ=u.kind==='hq';if(isBuilding&&!isHQ)u.building=false;const value=super.hit(u,amount,source,pierce);u.building=isBuilding;if(value>0&&source&&source.team!==u.team)this.recordCombat(u.hp<=0?'fall':'hit',u,source,u);if(u.hp===0){if(isBuilding){while(u.queue?.length)this.cancelTraining(u);if(isHQ)for(const b of this.structures.filter(b=>b.team===u.team))b.hp=0;this.rebuildObstacles();}else if(u.job?.type==='train'){const b=this.structures.find(b=>b.id===u.job.buildingId);if(b)b.queue=b.queue.filter(q=>q.unitId!==u.id);}}return value;}
   cast(team,ids=null,point=null){return super.cast(team,(ids||this.warriors(team).map(u=>u.id)).filter(id=>this.units.some(u=>u.id===id&&!u.worker)),point);}
   callRaid(){if(!this.running||this.over)return false;if(this.war&&this.alive().some(u=>u.raid&&u.team!==this.player))return false;this.war=true;this.wave++;const team=(this.player+1)%4,b=STARTS[this.player],s=b.x<W/2?1:-1;for(let i=0;i<4;i++){const p=this.world.free({x:b.x+s*(690+i%2*45),y:b.y+(Math.floor(i/2)-.5)*50}),u={id:this.nextUnit++,team,...p,attack:0,shield:0,poison:0,immune:0,flash:0,anim:0,walk:0,angle:0,dest:{x:b.x,y:b.y},path:[],repath:0,target:null,raid:true};this.makeSoldier(u,i>=3);u.order='advance';this.units.push(u);}this.notify('หน่วยศัตรูกำลังบุกฐาน · เตรียมทหารและหอคอย');return true;}
   setupShowcase(){

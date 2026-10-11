@@ -73,3 +73,70 @@
 #forest-rts #r-camera-speed{width:90px;vertical-align:middle}#forest-rts .r-view{flex-wrap:wrap}#forest-rts #r-pan[aria-pressed="true"]{background:#5b5731;outline:1px solid #e6cb87}
 
 #forest-rts #r-bot-panel label{display:block;margin:16px 0}#forest-rts #r-bot-panel select{margin-left:12px;min-width:180px}#forest-rts #r-bot-panel p{max-width:720px}
+
+/* The viewport belongs to the battlefield; commands occupy a compact fixed dock. */
+#forest-rts{height:calc(100dvh - 16px);min-height:460px;display:flex;flex-direction:column;--hud-height:178px}
+#forest-rts .r-topbar{flex:none;gap:7px;padding:4px 8px;min-height:44px}
+#forest-rts .r-stage{flex:1;min-height:180px}
+#forest-rts #r-field{height:100%;width:100%;position:absolute;inset:0}
+#forest-rts .r-hud{flex:0 0 var(--hud-height);height:var(--hud-height);min-height:0;grid-template-columns:166px minmax(210px,.85fr) minmax(340px,1.3fr);gap:6px;padding:5px 6px}
+#forest-rts .r-hud>section{height:100%;min-height:0;padding:4px 6px;overflow:auto}
+#forest-rts .r-minimap-panel{display:flex;flex-direction:column;gap:2px}
+#forest-rts .r-minimap-panel .r-panel-title{margin:0;font-size:8px}
+#forest-rts #r-mini{width:100%;height:101px;min-height:0;flex:1}
+#forest-rts #r-battle-watch{min-height:19px;padding:0 2px;font-size:9px;color:#ffc77b;box-shadow:none}
+#forest-rts .r-select-groups{margin:0;flex-direction:row}
+#forest-rts .r-select-groups button{min-height:23px}
+#forest-rts #r-portrait{width:52px;height:62px}
+#forest-rts .r-unit-detail{gap:7px}
+#forest-rts h3{font-size:12px;margin:0}
+#forest-rts .r-hp-label,#forest-rts .r-energy-label{margin-top:3px;font-size:9px}
+#forest-rts .r-hp-track,#forest-rts .r-energy-track{height:4px;margin-top:2px}
+#forest-rts #r-selection-desc{font-size:9px}
+#forest-rts #r-job{margin-top:2px;font-size:9px}
+#forest-rts .r-roster{margin:3px 0 0;max-height:23px;flex-wrap:nowrap}
+#forest-rts .r-combat-stats{margin:3px 0 0;padding-top:2px;font-size:9px;gap:9px;flex-wrap:wrap}
+#forest-rts .r-selection-bottom{margin-top:3px}
+#forest-rts .r-panel-title{margin-bottom:2px;min-height:14px}
+#forest-rts .r-commands{max-height:none;grid-column:auto;scrollbar-gutter:stable}
+#forest-rts .r-command-tabs{display:flex;gap:3px;position:sticky;top:-4px;z-index:4;background:#0c2117;padding:2px 0 4px}
+#forest-rts .r-command-tabs button{min-height:26px;padding:2px 7px;font-size:10px;white-space:nowrap}
+#forest-rts #r-hud-size{margin-left:auto}
+#forest-rts .r-commands .r-job-buttons button{min-height:28px;padding:3px;font-size:10px}
+#forest-rts .r-job-buttons em{display:inline;font-size:12px;margin-right:5px}
+#forest-rts .r-target-control{font-size:10px;margin:3px 0;gap:6px}
+#forest-rts .r-target-control select{padding:2px 5px;min-height:26px;font-size:10px}
+#forest-rts .r-commands .r-combat-hint{display:none}
+#forest-rts .r-skills{margin-top:3px}
+#forest-rts .r-skills button{min-height:28px;padding:2px}
+#forest-rts .r-skills span{display:none}
+#forest-rts .r-build-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#forest-rts .r-build-grid button{min-height:42px}
+#forest-rts .r-commands:not([data-deck="main"]) #r-combat-controls,
+#forest-rts .r-commands:not([data-deck="main"]) #r-worker-commands>.r-job-buttons,
+#forest-rts .r-commands:not([data-deck="main"]) #r-building-commands,
+#forest-rts .r-commands:not([data-deck="main"]) #r-army-commands>.r-skills,
+#forest-rts .r-commands:not([data-deck="main"]) #r-hero-skill,
+#forest-rts .r-commands:not([data-deck="main"]) #r-army-commands>.r-army-extra,
+#forest-rts .r-commands:not([data-deck="build"]) #r-build-grid,
+#forest-rts .r-commands:not([data-deck="build"]) .r-build-title,
+#forest-rts .r-commands:not([data-deck="train"]) #r-upgrade,
+#forest-rts .r-commands:not([data-deck="train"]) #r-training-options,
+#forest-rts .r-commands:not([data-deck="train"]) #r-form-info,
+#forest-rts .r-commands:not([data-deck="horse"]) #r-expedition-controls{display:none}
+#forest-rts .r-message{flex:none;min-height:20px;padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#forest-rts footer{display:none}
+#forest-rts .r-guide{position:absolute;inset:60px 5% 20px;overflow:auto;z-index:25}
+#forest-rts .r-objective{padding:5px 8px;bottom:8px;font-size:10px;max-width:45%}
+#forest-rts .r-objective strong{display:none}
+#forest-rts .r-crop-status{padding:5px 8px;bottom:8px;font-size:10px;min-width:175px}
+#forest-rts.r-hud-expanded{--hud-height:300px}
+@media(max-width:1100px){#forest-rts .r-brand{padding-right:5px}#forest-rts .r-resource{min-width:70px;gap:3px}#forest-rts .r-resource b{font-size:13px}#forest-rts .r-resource-icon{font-size:13px}#forest-rts .r-game-clock{padding-left:6px;min-width:50px}#forest-rts #r-showcase{display:none}}
+@media(max-width:800px){#forest-rts .r-hud{grid-template-columns:136px minmax(150px,.65fr) minmax(270px,1.2fr)}#forest-rts .r-command-tabs button{padding:2px 4px;font-size:9px}#forest-rts .r-camera-tools{left:auto;right:8px;top:40px}#forest-rts .r-alert{top:77px}#forest-rts #r-portrait{display:none}}
+@media(max-width:600px){#forest-rts{--hud-height:180px;height:100dvh;min-height:480px}#forest-rts .r-hud{grid-template-columns:114px minmax(0,1fr)}#forest-rts .r-selection{display:none}#forest-rts .r-select-groups{flex-wrap:wrap}#forest-rts .r-select-groups button{font-size:8px}#forest-rts .r-command-tabs button{font-size:9px;padding:2px 4px}#forest-rts .r-build-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#forest-rts .r-topbar{gap:4px}#forest-rts .r-topbar button{font-size:10px;min-height:27px}#forest-rts .r-topbar .r-resource small{display:none}#forest-rts .r-brand{display:none}#forest-rts .r-intro{bottom:60px;max-width:250px;padding:9px}#forest-rts .r-crop-status{min-width:135px;font-size:9px}#forest-rts .r-crop-status small{font-size:8px}#forest-rts .r-objective{max-width:43%;font-size:9px}#forest-rts.r-hud-expanded .r-selection{display:block;grid-column:1/-1}#forest-rts.r-hud-expanded{--hud-height:330px}#forest-rts.r-hud-expanded .r-hud{grid-template-rows:130px 180px}#forest-rts.r-hud-expanded .r-selection{grid-row:1}#forest-rts .r-roster button{width:23px;height:23px}}
+#forest-rts .r-selection #r-selection-desc{display:none}
+#forest-rts .r-intro{bottom:68px}
+#forest-rts .r-commands[data-deck="horse"] #r-expedition-status,
+#forest-rts .r-commands[data-deck="train"] #r-training-hint,
+#forest-rts .r-commands[data-deck="main"] #r-expedition-building{display:block;font-size:10px}
+#forest-rts .r-topbar .r-player-flags,#forest-rts .r-topbar .r-prototype{display:none}

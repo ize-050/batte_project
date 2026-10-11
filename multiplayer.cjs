@@ -94,7 +94,7 @@ class MultiplayerBattle extends EconomyBattle {
       stock:this.stock.map((s,i)=>i===team?copy(s):{rice:0,water:0}),
       cooldowns:this.cooldowns.map((v,i)=>i===team?v:0),volleys:this.volleys.map((v,i)=>i===team?v:0),
       projectiles:copy(this.projectiles.filter(visible)),effects:copy(this.effects.filter(visible)),zones:copy(this.zones.filter(visible)),
-      alerts:copy(this.alerts),events:[],seen:Buffer.from(this.seen).toString('base64'),visible:Buffer.from(this.visible).toString('base64')};
+      battleActivity:this.battleSignals(team),combatEvents:copy((this.combatEvents||[]).filter(e=>this.t-e.t<.8&&visible(e))),alerts:copy(this.alerts),events:[],seen:Buffer.from(this.seen).toString('base64'),visible:Buffer.from(this.visible).toString('base64')};
   });}
 }
 module.exports={MultiplayerBattle};
