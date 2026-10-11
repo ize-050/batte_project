@@ -90,6 +90,8 @@ class VillageBattle extends Battle {
   }
   nearest(u,r=260){
     if(u.worker&&u.job||u.job?.type==='train')return null;
+    // Stationed soldiers defend nearby ground without needing a manual attack order.
+    if(!u.worker&&u.order==='hold')r=Math.max(r,u.guardRange||280);
     let best=null;for(const v of this.targets(u.team)){
       if(!this.acceptsTarget(u,v)||(this.multiplayer?!this.canSee(u.team,v):u.team===this.player&&!this.visibleAt(v)))continue;
       const d=this.targetDistance(u,v);if(d<r){r=d;best=v;}
@@ -116,7 +118,7 @@ class VillageBattle extends Battle {
   }
   move(u,p,dt,tolerance=8){const oldX=u.x,oldY=u.y;const waypoint=u.path?.[0];if(waypoint){const dx=waypoint.x-u.x,dy=waypoint.y-u.y,d=Math.hypot(dx,dy);if(d>8){const vx=dx/d,vy=dy/d;const blocked=this.alive().some(v=>v.id!==u.id&&dist(u,v)<32&&(v.x-u.x)*vx+(v.y-u.y)*vy>0);if(blocked){const step=u.speed*dt*.95;let next={x:u.x-vy*step,y:u.y+vx*step};if(!this.world.walkable(next))next={x:u.x+vy*step,y:u.y-vx*step};if(this.world.walkable(next)){u.x=next.x;u.y=next.y;}}}}const done=super.move(u,p,dt,tolerance);if(Math.hypot(u.x-oldX,u.y-oldY)>.01){u.movingUntil=this.t+.12;u.stride=(u.stride||0)+Math.hypot(u.x-oldX,u.y-oldY)*.22;}return done;}
   makeWorker(u){Object.assign(u,{worker:true,ranged:false,hp:110,max:110,damage:4,range:25,speed:94,cargo:0,cargoType:null,job:null,work:0,inTraining:false});}
-  makeSoldier(u,ranged){const c=CLANS[u.team];Object.assign(u,{worker:false,ranged,className:ranged?'พลธนู':'นักดาบ',role:ranged?'archer':'sword',heroCooldown:0,form:null,awakened:0,venom:0,venomDps:0,tier:1,schools:[ranged?'archery':'dojo'],hp:ranged?130:c.hp,max:ranged?130:c.hp,damage:ranged?18:c.damage,range:ranged?180:31,speed:c.speed,job:null,inTraining:false,order:'hold',path:[],repath:0});}
+  makeSoldier(u,ranged){const c=CLANS[u.team];Object.assign(u,{worker:false,ranged,className:ranged?'พลธนู':'นักดาบ',role:ranged?'archer':'sword',heroCooldown:0,form:null,awakened:0,venom:0,venomDps:0,tier:1,schools:[ranged?'archery':'dojo'],hp:ranged?130:c.hp,max:ranged?130:c.hp,damage:ranged?18:c.damage,range:ranged?180:31,speed:c.speed,job:null,inTraining:false,order:'hold',guardRange:280,path:[],repath:0});}
   notify(text){this.events.push({id:++this.eventSerial,text,t:this.t});this.events=this.events.slice(-10);}
   addStructure(kind,p,team,complete=false){const d=BUILDINGS[kind],b={...p,id:'building-'+this.nextStructure++,kind,team,building:true,hp:complete?d.hp:80,max:d.hp,w:d.w,h:d.h,complete,progress:complete?1:0,queue:[],level:1,range:kind==='tower'?300:0,damage:kind==='tower'?27:0,spawn:0,attack:0,flash:0,cost:{rice:d.rice,water:d.water}};this.structures.push(b);return b;}
   affordable(cost,team=this.player){const r=this.stock[team];return r.rice>=cost.rice&&r.water>=cost.water;}
