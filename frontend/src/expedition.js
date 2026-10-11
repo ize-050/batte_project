@@ -5,9 +5,9 @@ Object.assign(BUILDINGS,{
  workshop:{name:'โรงเครื่องยิง',icon:'➶',rice:200,water:120,seconds:28,hp:850,w:112,h:86,description:'ส่งชาวบ้านประจำเครื่องยิง · 140 ข้าว / 80 น้ำ · ตีอาคารแรง แต่แพ้ประชิด'}
 });
 const SPECIALISTS={
- scout:{name:'สายลับสอดแนม',building:'shrine',rice:80,water:50,seconds:16,max:120,damage:12,range:30,speed:105,ranged:false},
- spear:{name:'พลหอก',building:'dojo',rice:70,water:30,seconds:14,max:180,damage:22,range:48,speed:78,ranged:false},
- siege:{name:'หน่วยเครื่องยิง',building:'workshop',rice:140,water:80,seconds:24,max:220,damage:10,range:270,speed:52,ranged:true}
+ scout:{name:'สายลับสอดแนม',building:'shrine',rice:80,water:50,seconds:16,max:120,damage:12,range:30,speed:148,ranged:false},
+ spear:{name:'พลหอก',building:'dojo',rice:70,water:30,seconds:14,max:180,damage:22,range:48,speed:106,ranged:false},
+ siege:{name:'หน่วยเครื่องยิง',building:'workshop',rice:140,water:80,seconds:24,max:220,damage:10,range:270,speed:68,ranged:true}
 };
 const RIDING={cost:{rice:25,water:10},speed:[145,155,170,150],captureSeconds:4};
 class EconomyBattle extends VillageBattle {

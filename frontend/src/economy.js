@@ -22,10 +22,10 @@ const COMBINATIONS={
  'archery,shrine':{name:'นักธนูมนตรา',role:'mystic',ranged:true,max:175,damage:34,range:230}
 };
 const ASCENSIONS=[
- {form:'tiger',name:'พยัคฆ์ศึก',hero:'ราชันพยัคฆ์',speed:76,passive:'เกราะพยัคฆ์ · ลดดาเมจตรง 15% (ไม่ลดพิษ)',ability:'คำราม 90 รอบตัว + กำแพงโล่ให้ตัวเอง 6 วิ'},
- {form:'naga',name:'นักรบนาค',hero:'จ้าวนาคราช',speed:89,passive:'กระสุนพิษ · 3 HP/วิ นาน 3 วิ · ไม่ทบซ้อน',ability:'หมอกพิษวงใหญ่ 10 วิ + กระสุนพิษแรงขึ้นเป็น 6 HP/วิ นาน 10 วิ'},
- {form:'crane',name:'ผู้พิทักษ์กระเรียน',hero:'เซียนกระเรียน',speed:80,passive:'ปีกพิสุทธิ์ · ต้านทานพิษ · เคลื่อนที่ตามพื้น',ability:'รักษากลุ่ม 100 HP + ล้างพิษและกันพิษ 6 วิ'},
- {form:'wolf',name:'มนุษย์หมาป่า',hero:'จ่าฝูงหมาป่า',speed:104,passive:'ก้าวนักล่า · ความเร็ว 104 · ต่อสู้ด้วยกรงเล็บ',ability:'พุ่งโจมตี 140 + คลั่ง 8 วิ: เดินเร็วขึ้น 30% / ดาเมจเพิ่ม 25%'}
+ {form:'tiger',name:'พยัคฆ์ศึก',hero:'ราชันพยัคฆ์',speed:121,passive:'เกราะพยัคฆ์ · ลดดาเมจตรง 15% (ไม่ลดพิษ)',ability:'คำราม 90 รอบตัว + กำแพงโล่ให้ตัวเอง 6 วิ'},
+ {form:'naga',name:'นักรบนาค',hero:'จ้าวนาคราช',speed:131,passive:'กระสุนพิษ · 3 HP/วิ นาน 3 วิ · ไม่ทบซ้อน',ability:'หมอกพิษวงใหญ่ 10 วิ + กระสุนพิษแรงขึ้นเป็น 6 HP/วิ นาน 10 วิ'},
+ {form:'crane',name:'ผู้พิทักษ์กระเรียน',hero:'เซียนกระเรียน',speed:126,passive:'ปีกพิสุทธิ์ · ต้านทานพิษ · เคลื่อนที่ตามพื้น',ability:'รักษากลุ่ม 100 HP + ล้างพิษและกันพิษ 6 วิ'},
+ {form:'wolf',name:'มนุษย์หมาป่า',hero:'จ่าฝูงหมาป่า',speed:146,passive:'ก้าวนักล่า · ความเร็ว 146 · ต่อสู้ด้วยกรงเล็บ',ability:'พุ่งโจมตี 140 + คลั่ง 8 วิ: เดินเร็วขึ้น 30% / ดาเมจเพิ่ม 25%'}
 ];
 const ELITES=ASCENSIONS.map(f=>f.name);
 const HERO_SKILLS=['พยัคฆ์คำราม','มหาหมอกพิษ','พรแห่งกระเรียน','คลั่งจ่าฝูง'];
@@ -34,6 +34,10 @@ const RICE_PATCHES=48;
 function ricePatchPoint(r,index){const row=Math.floor(index/8),col=index%8;return{x:r.x+(col-3.5)*16+(row-2.5)*15,y:r.y+(col-3.5)*7-(row-2.5)*9};}
 function unitTitle(u){return u.worker?'ชาวบ้าน':u.className||TRAINING[u.ranged?'archery':'dojo'].name;}
 const RICE_CYCLE={fallow:8,growing:22};
+// Movement is role-based: defenders can answer raids, while ranged and heavy
+// units trade speed for safer range or durability.
+const UNIT_SPEED={worker:-16,sword:0,archer:-8,armored:-12,guardian:-17,mystic:-5,elite:5,hero:9};
+function unitSpeed(team,role='sword'){return [112,120,116,128][team]+(UNIT_SPEED[role]??0);}
 // Shared, deterministic neutral food sites: one expansion and one contested site per quadrant.
 const RICE_SITES=[
  {x:900,y:650,name:'อู่ข้าวตะวันตกเฉียงเหนือ',max:720},{x:2300,y:650,name:'อู่ข้าวตะวันออกเฉียงเหนือ',max:720},
@@ -117,8 +121,8 @@ class VillageBattle extends Battle {
     }return items;
   }
   move(u,p,dt,tolerance=8){const oldX=u.x,oldY=u.y;const waypoint=u.path?.[0];if(waypoint){const dx=waypoint.x-u.x,dy=waypoint.y-u.y,d=Math.hypot(dx,dy);if(d>8){const vx=dx/d,vy=dy/d;const blocked=this.alive().some(v=>v.id!==u.id&&dist(u,v)<32&&(v.x-u.x)*vx+(v.y-u.y)*vy>0);if(blocked){const step=u.speed*dt*.95;let next={x:u.x-vy*step,y:u.y+vx*step};if(!this.world.walkable(next))next={x:u.x+vy*step,y:u.y-vx*step};if(this.world.walkable(next)){u.x=next.x;u.y=next.y;}}}}const done=super.move(u,p,dt,tolerance);if(Math.hypot(u.x-oldX,u.y-oldY)>.01){u.movingUntil=this.t+.12;u.stride=(u.stride||0)+Math.hypot(u.x-oldX,u.y-oldY)*.22;}return done;}
-  makeWorker(u){Object.assign(u,{worker:true,ranged:false,hp:110,max:110,damage:4,range:25,speed:94,cargo:0,cargoType:null,job:null,work:0,inTraining:false});}
-  makeSoldier(u,ranged){const c=CLANS[u.team];Object.assign(u,{worker:false,ranged,className:ranged?'พลธนู':'นักดาบ',role:ranged?'archer':'sword',heroCooldown:0,form:null,awakened:0,venom:0,venomDps:0,tier:1,schools:[ranged?'archery':'dojo'],hp:ranged?130:c.hp,max:ranged?130:c.hp,damage:ranged?18:c.damage,range:ranged?180:31,speed:c.speed,job:null,inTraining:false,order:'hold',guardRange:280,path:[],repath:0});}
+  makeWorker(u){const speed=unitSpeed(u.team,'worker');Object.assign(u,{worker:true,ranged:false,hp:110,max:110,damage:4,range:25,speed,baseSpeed:speed,cargo:0,cargoType:null,job:null,work:0,inTraining:false});}
+  makeSoldier(u,ranged){const c=CLANS[u.team],role=ranged?'archer':'sword',speed=unitSpeed(u.team,role);Object.assign(u,{worker:false,ranged,className:ranged?'พลธนู':'นักดาบ',role,heroCooldown:0,form:null,awakened:0,venom:0,venomDps:0,tier:1,schools:[ranged?'archery':'dojo'],hp:ranged?130:c.hp,max:ranged?130:c.hp,damage:ranged?18:c.damage,range:ranged?180:31,speed,baseSpeed:speed,job:null,inTraining:false,order:'hold',guardRange:280,path:[],repath:0});}
   notify(text){this.events.push({id:++this.eventSerial,text,t:this.t});this.events=this.events.slice(-10);}
   addStructure(kind,p,team,complete=false){const d=BUILDINGS[kind],b={...p,id:'building-'+this.nextStructure++,kind,team,building:true,hp:complete?d.hp:80,max:d.hp,w:d.w,h:d.h,complete,progress:complete?1:0,queue:[],level:1,range:kind==='tower'?300:0,damage:kind==='tower'?27:0,spawn:0,attack:0,flash:0,cost:{rice:d.rice,water:d.water}};this.structures.push(b);return b;}
   affordable(cost,team=this.player){const r=this.stock[team];return r.rice>=cost.rice&&r.water>=cost.water;}
@@ -160,7 +164,7 @@ class VillageBattle extends Battle {
   }
   finishTraining(u,recipe){
     const health=u.hp/u.max;this.makeSoldier(u,recipe.ranged);
-    Object.assign(u,{tier:recipe.tier,schools:[...recipe.schools],className:recipe.name,role:recipe.role});
+    Object.assign(u,{tier:recipe.tier,schools:[...recipe.schools],className:recipe.name,role:recipe.role});u.speed=unitSpeed(u.team,recipe.role);u.baseSpeed=u.speed;
     if(recipe.max)Object.assign(u,{max:recipe.max,damage:recipe.damage,range:recipe.range});
     if(recipe.role==='adept')Object.assign(u,{max:125,damage:21,range:155});
     u.hp=Math.max(1,u.max*health);u.heroCooldown=0;
