@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
-const {EconomyBattle,RICE_SITES,ricePatchPoint,STARTS,dist}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle,RICE_SITES,ricePatchPoint,STARTS,dist};')();
-const {MultiplayerBattle}=require('./multiplayer.cjs');
+const {EconomyBattle,RICE_SITES,ricePatchPoint,STARTS,dist}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle,RICE_SITES,ricePatchPoint,STARTS,dist};')();
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
 const tick=(g,s)=>{for(let i=0;i<s*20;i++)g.step(.05);};
 const base=new EconomyBattle(),sites=base.resources.filter(r=>r.neutral);
 assert.equal(base.resources.filter(r=>r.type==='rice').length,12);assert.equal(sites.length,8);

@@ -1,0 +1,11 @@
+{
+  "name": "@four-clans/backend",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

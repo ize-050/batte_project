@@ -1,10 +1,10 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const {EconomyBattle,World,Camera,STARTS,W,H,dist,clamp}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle,World,Camera,STARTS,W,H,dist,clamp};')();
+const {EconomyBattle,World,Camera,STARTS,W,H,dist,clamp}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle,World,Camera,STARTS,W,H,dist,clamp};')();
 const g=new EconomyBattle();assert.equal(W,3520);assert.equal(H,2640);
 assert.equal(g.horses.filter(h=>h.site==='home').length,8);assert.equal(g.horses.filter(h=>h.site==='flank').length,4);assert.equal(g.horses.filter(h=>h.site==='center').length,8);
 for(const h of g.horses){assert(g.world.walkable(h));for(const b of STARTS)assert(g.world.path(b,h).length,'every clan can reach every horse');if(h.site==='center')assert(STARTS.every(b=>dist(b,h)>800),'contested horses are outside the starting bases');}
 for(let team=1;team<4;team++)assert.deepEqual(new EconomyBattle(team).horses.map(h=>[h.id,h.x,h.y]),g.horses.map(h=>[h.id,h.x,h.y]),'all players share the same map');
-const source=fs.readFileSync('src/controller.js','utf8'),handlers={};
+const source=fs.readFileSync('frontend/src/controller.js','utf8'),handlers={};
 const elements=new Map();function el(id){if(!elements.has(id))elements.set(id,{style:{},hidden:true,checked:false,value:'560',focus(){},addEventListener(name,fn){handlers[id+':'+name]=fn;},setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){}});return elements.get(id);}
 const camera=new Camera(800,400);camera.center({x:W/2,y:H/2});
 let orders=0,ui=0;const units=[{id:1,x:camera.x+100,y:camera.y+100},{id:2,x:camera.x+200,y:camera.y+150}];

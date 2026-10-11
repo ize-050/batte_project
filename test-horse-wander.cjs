@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
-const {EconomyBattle,dist}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle,dist};')();
-const {MultiplayerBattle}=require('./multiplayer.cjs');
+const {EconomyBattle,dist}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle,dist};')();
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
 const tick=(g,s)=>{for(let i=0;i<Math.ceil(s*20);i++)g.step(.05);};
 function quiet(g){g.running=true;g.aiWait.fill(Infinity);for(const b of g.structures){b.spawn=-1e6;b.attack=1e6;}return g;}
 {

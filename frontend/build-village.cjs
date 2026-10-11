@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path');
 const read=p=>fs.readFileSync(path.join(__dirname,p),'utf8');
 const base=read('forest-rts-v2-backup.html');
-const engine=require('./engine-source.cjs')();
+const engine=require('../shared/engine-source.cjs')();
 const rendering=base.slice(base.indexOf('function ellipse('),base.indexOf('function inView(')).replace('function drawUnit(u){','function drawUnit(u){if(richUnit(u))return;');
 const artData='const ART_ATLAS="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/jungle-atlas.webp')).toString('base64')+'",ART_GROUND="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/forest-floor.webp')).toString('base64')+'",ART_POND="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/pond.webp')).toString('base64')+'";';
 const formData='const ART_FORMS="data:image/webp;base64,'+fs.readFileSync(path.join(__dirname,'assets/ascension-atlas.webp')).toString('base64')+'";';

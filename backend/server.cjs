@@ -1,6 +1,4 @@
 const http=require('node:http');
-const fs=require('node:fs');
-const path=require('node:path');
 const {randomBytes}=require('node:crypto');
 const {WebSocketServer,WebSocket}=require('ws');
 const {MultiplayerBattle}=require('./multiplayer.cjs');
@@ -10,14 +8,10 @@ function createGameServer(options={}){
   const maxRooms=options.maxRooms??Number(process.env.MAX_ROOMS||8);
   const reconnectMs=options.reconnectMs??90000;
   const allowedOrigins=(options.allowedOrigins??process.env.ALLOWED_ORIGINS??'').split(',').map(s=>s.trim()).filter(Boolean);
-  const page=path.join(__dirname,'dist/index.html');
   const server=http.createServer((req,res)=>{
     const url=new URL(req.url,'http://local');
     if(url.pathname==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,rooms:rooms.size}));return;}
-    if(!['/','/index.html','/battle-preview.html'].includes(url.pathname)){res.writeHead(404);res.end('Not found');return;}
-    if(!fs.existsSync(page)){res.writeHead(503);res.end('Run npm run build first');return;}
-    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
-    fs.createReadStream(page).pipe(res);
+    res.writeHead(404,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Not found'}));
   });
   const wss=new WebSocketServer({noServer:true,maxPayload:8192,perMessageDeflate:{threshold:1024,serverNoContextTakeover:true,clientNoContextTakeover:true,concurrencyLimit:4,zlibDeflateOptions:{level:3}}});
   server.on('upgrade',(req,socket,head)=>{
@@ -135,7 +129,7 @@ function createGameServer(options={}){
 }
 if(require.main===module){
   const app=createGameServer(),port=Number(process.env.PORT||4179);
-  app.server.listen(port,'0.0.0.0',()=>console.log('Four Clans online listening on http://localhost:'+port));
+  app.server.listen(port,'0.0.0.0',()=>console.log('Four Clans backend listening on http://localhost:'+port));
   for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>app.close().then(()=>process.exit(0)));
 }
 module.exports={createGameServer};

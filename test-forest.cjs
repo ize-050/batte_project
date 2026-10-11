@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const html = fs.readFileSync(path.join(__dirname, 'forest-rts.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, 'frontend/forest-rts.html'), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new Function(script);
 const source = script.split('// ENGINE-BEGIN')[1].split('// ENGINE-END')[0];

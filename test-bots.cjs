@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {BotBattle,EconomyBattle,BOT_LEVELS,STARTS}=new Function(require('./engine-source.cjs')()+';return {BotBattle,EconomyBattle,BOT_LEVELS,STARTS};')();
+const {BotBattle,EconomyBattle,BOT_LEVELS,STARTS}=new Function(require('./shared/engine-source.cjs')()+';return {BotBattle,EconomyBattle,BOT_LEVELS,STARTS};')();
 const tick=(g,s)=>{for(let i=0;i<s*20;i++)g.step(.05);};
 for(let player=0;player<4;player++)for(const count of [1,2,3]){
  const g=new BotBattle(player,undefined,count);assert.equal(g.botTeams.length,count);assert.equal(g.bases.filter(b=>b.hp>0).length,count+1);assert(g.units.every(u=>g.activeTeams.includes(u.team)));assert(!g.botTeams.includes(player));

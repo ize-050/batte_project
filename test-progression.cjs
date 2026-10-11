@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
-const html=fs.readFileSync(__dirname+'/forest-rts.html','utf8');
+const html=fs.readFileSync(__dirname+'/frontend/forest-rts.html','utf8');
 const src=html.split('// ENGINE-BEGIN')[1].split('// ENGINE-END')[0];
 const {EconomyBattle,World,TRAINING,ricePatchPoint}=new Function(src+';return{EconomyBattle,World,TRAINING,ricePatchPoint};')();
 function tick(g,s){for(let i=0;i<s*20;i++)g.step(.05);}

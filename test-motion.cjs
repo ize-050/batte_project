@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const {MotionFrames}=new Function(fs.readFileSync('src/motion.js','utf8')+';return {MotionFrames};')();
+const {MotionFrames}=new Function(fs.readFileSync('frontend/src/motion.js','utf8')+';return {MotionFrames};')();
 function scene(){return {t:0,units:[{id:1,x:0,y:0,hp:100,angle:0,stride:0}],horses:[{id:'h',x:0,y:20,status:'wild',angle:0,stride:0}]};}
 for(const hz of [30,60,90,144]){
  const g=scene(),m=new MotionFrames();m.capture(g);let debt=0,last=null,positive=0,maxJump=0;

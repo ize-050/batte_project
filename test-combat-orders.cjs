@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
-const {EconomyBattle,World}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle,World};')();
-const {MultiplayerBattle}=require('./multiplayer.cjs');
+const {EconomyBattle,World}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle,World};')();
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
 const tick=(g,s)=>{for(let i=0;i<s*20;i++)g.step(.05);};
 function arena(team=0){const g=new EconomyBattle(team,new World());g.running=true;g.aiWait.fill(Infinity);for(const b of g.structures){b.attack=1e6;b.spawn=-1e6;}const u=g.warriors()[0],enemy=g.warriors((team+1)%4)[0];g.units=[u,enemy];Object.assign(u,{x:800,y:400,hp:10000,max:10000});Object.assign(enemy,{x:850,y:400,attack:1e6});const tower=g.addStructure('tower',{x:960,y:400},enemy.team,true);tower.attack=1e6;g.rebuildObstacles();g.updateVision();return{g,u,enemy,tower};}
 for(const team of [0,1,2,3]){
@@ -35,7 +35,7 @@ for(let team=0;team<4;team++){
 console.log('PASS combat orders: filters, direct override, melee tower edge for four clans, retargeting, move vs attack-move, mixed-tier promotion guidance, online ownership and fog');
 // Exercise the actual UI context-command function with mixed selections.
 {
- const vm=require('node:vm'),source=require('node:fs').readFileSync(__dirname+'/src/controller.js','utf8');
+ const vm=require('node:vm'),source=require('node:fs').readFileSync(__dirname+'/frontend/src/controller.js','utf8');
  const {g,u}=arena(),worker={...u,id:999,worker:true};g.units.push(worker);const calls=[];g.issue=(ids,mode)=>calls.push({ids,mode});
  const context={renderActor:u=>u,game:g,mode:null,player:0,selected:new Set([u.id,worker.id]),own:()=>[u,worker],ownWorkers:()=>[worker],message:()=>{},updateUI:()=>{},TRAINING:{},CLANS:[],dist:(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),unitHit:()=>false};
  vm.createContext(context);vm.runInContext(source.slice(source.indexOf('function command(p)'),source.indexOf('for(const [kind,d]of Object.entries(BUILDINGS))')),context);

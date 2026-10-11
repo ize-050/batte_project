@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const {WebSocket}=require('ws');
-const {createGameServer}=require('./server.cjs');
-const {MultiplayerBattle}=require('./multiplayer.cjs');
+const {createGameServer}=require('./backend/server.cjs');
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
  const app=createGameServer({reconnectMs:350,maxRooms:5});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));

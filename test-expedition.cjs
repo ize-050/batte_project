@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
-const {EconomyBattle,SPECIALISTS,dist}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle,SPECIALISTS,dist};')();
-const {MultiplayerBattle}=require('./multiplayer.cjs');
+const {EconomyBattle,SPECIALISTS,dist}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle,SPECIALISTS,dist};')();
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
 const tick=(g,s)=>{for(let i=0;i<Math.ceil(s*20);i++)g.step(.05);};
 function demo(team=0){const g=new EconomyBattle(team);g.setupExpedition();g.running=true;g.aiWait.fill(Infinity);for(const b of g.structures){b.spawn=-1e6;b.attack=1e6;}for(const u of g.workers())g.setJob(u,null);return g;}
 function building(g,kind,team=g.player){return g.structures.find(b=>b.team===team&&b.kind===kind);}
@@ -79,7 +79,7 @@ console.log('PASS expedition: cancellation/death/refunds, villagers fight and re
 console.log('PASS expedition: Naga sabotage costs enemy supplies, enforces cooldown/reveal, mounted venom, and forward placement requires scouted territory');
 // The local render loop must advance the same fixed simulation step at different display rates.
 {
- const fs=require('node:fs'),vm=require('node:vm'),s=fs.readFileSync(__dirname+'/src/render.js','utf8');
+ const fs=require('node:fs'),vm=require('node:vm'),s=fs.readFileSync(__dirname+'/frontend/src/render.js','utf8');
  const loop=s.slice(s.indexOf('if(online?.active){simulationDebt=0;'),s.indexOf('draw();',s.indexOf('if(online?.active){simulationDebt=0;')));
  for(const hz of [30,60,90,144]){const steps=[],c={motionFrames:{capture(){}},online:null,simulationDebt:0,dt:1/hz,game:{step:dt=>steps.push(dt)}};vm.createContext(c);for(let i=0;i<hz*10;i++)vm.runInContext(loop,c);assert(steps.length>=199&&steps.length<=200);assert(steps.every(d=>d===.05));}
  console.log('PASS local simulation: 30/60/90/144 Hz displays use the same 20 Hz game rules');

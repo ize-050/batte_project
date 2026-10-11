@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const {MultiplayerBattle}=require('./multiplayer.cjs');
-const {EconomyBattle}=new Function(require('./engine-source.cjs')()+';return {EconomyBattle};')();
+const {MultiplayerBattle}=require('./backend/multiplayer.cjs');
+const {EconomyBattle}=new Function(require('./shared/engine-source.cjs')()+';return {EconomyBattle};')();
 const g=new EconomyBattle(0),a=g.warriors(1)[0],b=g.warriors(2)[0];
 g.running=true;g.t=10;Object.assign(a,{x:2800,y:2100});Object.assign(b,{x:2840,y:2110});
 g.hit(b,10,a);assert.equal(g.battleSignals(0)[0].own,false);assert.equal(g.battleSignals(1)[0].own,true);assert.equal(g.battleSignals(2)[0].own,true);
@@ -13,7 +13,7 @@ const net=new MultiplayerBattle([0,1,2,3]),n1=net.warriors(1)[0],n2=net.warriors
 Object.assign(n1,{x:2800,y:2100});Object.assign(n2,{x:2840,y:2110});net.refreshVision();net.hit(n2,10,n1);
 const snapshot=net.snapshot(0);assert(snapshot.battleActivity.length);assert.equal(snapshot.battleActivity[0].own,false);assert.equal(snapshot.combatEvents.length,0);assert(!snapshot.units.some(u=>u.id===n1.id||u.id===n2.id),'coarse activity does not reveal hidden armies');
 assert(net.snapshot(2).combatEvents.length,'visible combat reaches participants');
-const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync('src/combat-audio.js','utf8')+';this.audioAPI={nextCombatSounds,combatSoundStyle};',ctx);
+const ctx={};vm.createContext(ctx);vm.runInContext(fs.readFileSync('frontend/src/combat-audio.js','utf8')+';this.audioAPI={nextCombatSounds,combatSoundStyle};',ctx);
 const {nextCombatSounds,combatSoundStyle}=ctx.audioAPI,cursor={id:0};
 const events=Array.from({length:9},(_,i)=>({id:i+1,t:2,kind:'hit',voice:'blade'}));
 assert.equal(nextCombatSounds(events,cursor,2,true,()=>true).length,2,'caps simultaneous sounds');

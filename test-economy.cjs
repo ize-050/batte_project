@@ -1,5 +1,5 @@
 const fs=require('node:fs'),assert=require('node:assert/strict');
-const html=fs.readFileSync(__dirname+'/forest-rts.html','utf8');
+const html=fs.readFileSync(__dirname+'/frontend/forest-rts.html','utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];new Function(script);
 const source=script.split('// ENGINE-BEGIN')[1].split('// ENGINE-END')[0];
 const {EconomyBattle,World,BUILDINGS}=new Function(source+';return {EconomyBattle,World,BUILDINGS};')();

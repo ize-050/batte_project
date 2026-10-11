@@ -1,4 +1,4 @@
-const engine = new Function(require('./engine-source.cjs')() + ';return {EconomyBattle,World,W,H,COLS,ROWS,BUILDINGS,dist};')();
+const engine = new Function(require('../shared/engine-source.cjs')() + ';return {EconomyBattle,World,W,H,COLS,ROWS,BUILDINGS,dist};')();
 const {EconomyBattle,World,W,H,COLS,ROWS,BUILDINGS,dist} = engine;
 const copy = value => JSON.parse(JSON.stringify(value, (key, v) => ['target','path'].includes(key) ? undefined : v));
 class MultiplayerBattle extends EconomyBattle {
