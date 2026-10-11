@@ -124,7 +124,7 @@
 #forest-rts .r-commands:not([data-deck="train"]) #r-training-options,
 #forest-rts .r-commands:not([data-deck="train"]) #r-form-info,
 #forest-rts .r-commands:not([data-deck="horse"]) #r-expedition-controls{display:none}
-#forest-rts .r-message{flex:none;min-height:20px;padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#forest-rts .r-message{flex:none;min-height:20px;padding:2px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#forest-rts #r-objective-hint{display:block;margin-top:4px;color:#b7c7ac;font-size:10px}
 #forest-rts footer{display:none}
 #forest-rts .r-guide{position:absolute;inset:60px 5% 20px;overflow:auto;z-index:25}
 #forest-rts .r-objective{padding:5px 8px;bottom:8px;font-size:10px;max-width:45%}

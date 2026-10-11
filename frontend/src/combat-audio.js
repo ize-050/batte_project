@@ -1,6 +1,10 @@
 // Short synthesized effects, not recorded character voices. No external audio assets.
 const combatSoundCursor={game:null,id:0,next:0};
 let combatNoise=null;
+function playFeedbackSound(kind){
+ if(!$('sound').checked||soundContext?.state!=='running')return;
+ try{const audio=soundContext,t=audio.currentTime,o=audio.createOscillator(),g=audio.createGain(),volume=Number($('volume').value)/100*.07;o.type='sine';o.frequency.setValueAtTime(kind==='notice'?480:680,t);o.frequency.exponentialRampToValueAtTime(kind==='notice'?610:900,t+.08);g.gain.setValueAtTime(.001,t);g.gain.linearRampToValueAtTime(volume,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.11);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+.12);}catch{}
+}
 function combatSoundStyle(e){
  if(e.kind==='fall')return {frequency:100,end:38,duration:.2,noise:.6,type:'triangle'};
  if(e.voice==='siege')return {frequency:85,end:32,duration:.24,noise:.9,type:'triangle'};
