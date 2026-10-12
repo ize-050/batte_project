@@ -1,11 +1,11 @@
 // Local skirmishes use the same economic commands and costs as human players.
-const BOT_LEVELS={easy:{name:'ง่าย',think:4,build:12,attack:240,wave:100},normal:{name:'ปกติ',think:2,build:8,attack:150,wave:65}};
+const BOT_LEVELS={easy:{name:'ง่าย',think:4,build:12,attack:480,wave:100},normal:{name:'ปกติ',think:2,build:8,attack:150,wave:65}};
 class BotBattle extends EconomyBattle {
  constructor(player=0,world=new World(),count=1,difficulty='normal'){
   super(player,world);this.human=player;this.botMode=true;this.difficulty=Object.hasOwn(BOT_LEVELS,difficulty)?difficulty:'normal';
   this.botRules=BOT_LEVELS[this.difficulty];this.activeTeams=[player,...[1,2,3].slice(0,clamp(Math.floor(count)||1,1,3)).map(n=>(player+n)%4)];
   this.botTeams=this.activeTeams.filter(t=>t!==player);this.botViews=Array.from({length:4},()=>({seen:new Uint8Array(COLS*ROWS),visible:new Uint8Array(COLS*ROWS)}));
-  this.botStates=this.botTeams.map(team=>({team,nextThink:0,nextBuild:0,nextAttack:this.botRules.attack,builds:0,trains:0,attacks:0}));this.aiWait.fill(Infinity);
+  this.botStates=this.botTeams.map(team=>({team,nextThink:0,nextBuild:0,nextAttack:this.botRules.attack,builds:0,trains:0,attacks:0,assaultTargetId:null}));this.aiWait.fill(Infinity);
   this.units=this.units.filter(u=>this.activeTeams.includes(u.team));for(const b of this.structures)if(!this.activeTeams.includes(b.team))b.hp=0;
   this.structures=this.structures.filter(b=>this.activeTeams.includes(b.team));this.rebuildObstacles();this.updateVision();this.refreshBots();
  }
@@ -54,9 +54,16 @@ class BotBattle extends EconomyBattle {
    }
   }
   const ready=this.warriors().filter(u=>!u.job);
+  let assault=this.bases.find(b=>b.id===state.assaultTargetId&&b.hp>0&&b.team!==team);
   if(!threats.length&&this.t>=state.nextAttack&&ready.length>=4){
-   const enemy=this.bases.filter(b=>b.hp>0&&b.team!==team).sort((a,b)=>dist(a,home)-dist(b,home))[0];
-   if(enemy){this.issue(ready.map(u=>u.id),'advance',enemy);state.nextAttack=this.t+this.botRules.wave;state.attacks++;}
+   assault=this.bases.filter(b=>b.hp>0&&b.team!==team).sort((a,b)=>dist(a,home)-dist(b,home))[0];
+   if(assault){state.assaultTargetId=assault.id;state.nextAttack=this.t+this.botRules.wave;state.attacks++;}
+  }
+  // Keep the assault alive: soldiers produced after the first order join the
+  // current march immediately instead of waiting for the next attack timer.
+  if(!threats.length&&assault){
+   const reinforcements=ready.filter(u=>u.order!=='advance'||!u.dest||dist(u.dest,assault)>160);
+   if(reinforcements.length)this.issue(reinforcements.map(u=>u.id),'advance',assault);
   }
  }
  step(dt){

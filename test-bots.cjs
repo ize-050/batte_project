@@ -13,10 +13,19 @@ g.spend=(cost,team=g.player)=>{const result=spend(cost,team);if(result&&team!==0
 tick(g,240);assert(income>500);assert(paid>1000);for(const s of g.botStates){assert(s.builds>=3);assert(s.trains>=2);assert(s.attacks>=1);}
 assert(g.stats.hits>0,'bot armies fight using the real combat simulation');assert.equal(g.bases[0].hp,0,'idle human base can lose to a bot raid');assert(g.over);assert(!g.running);assert(g.stock.every(s=>s.rice>=0&&s.water>=0));
 {
- const b=new BotBattle(2,undefined,1,'easy');b.running=true;assert(BOT_LEVELS.easy.attack>BOT_LEVELS.normal.attack);const team=b.botTeams[0],u=b.warriors(team)[0],enemy=b.warriors(2)[0];
+ const b=new BotBattle(2,undefined,1,'easy');b.running=true;assert.equal(BOT_LEVELS.easy.attack,480,'easy bots wait eight minutes before their first raid');assert(BOT_LEVELS.easy.attack>BOT_LEVELS.normal.attack);const team=b.botTeams[0],u=b.warriors(team)[0],enemy=b.warriors(2)[0];
  Object.assign(u,{x:1400,y:1300});Object.assign(enemy,{x:1410,y:1300});b.botViews[team].visible.fill(0);assert(!b.observable(team,enemy),'bots do not see through fog');b.refreshBots();assert(b.observable(team,enemy));
  const seen=b.seen,visible=b.visible;b.asBot(team,()=>{assert.equal(b.player,team);});assert.equal(b.player,2);assert.equal(b.seen,seen);assert.equal(b.visible,visible);
  b.hit(b.bases[team],1e9,null,true);tick(b,.05);assert(b.over);assert.equal(b.winner,2);assert(!b.running);
+}
+{
+ const b=new BotBattle(0,undefined,1,'normal');b.running=true;const state=b.botStates[0],team=state.team;
+ tick(b,BOT_LEVELS.normal.attack-1);assert.equal(state.attacks,0,'normal bot waits for its opening attack timer');
+ tick(b,2);assert.equal(state.attacks,1,'normal bot starts an assault');assert(state.assaultTargetId,'assault keeps a target');
+ const target=b.bases.find(base=>base.id===state.assaultTargetId),home=STARTS[team];
+ const reinforcement={id:b.nextUnit++,team,x:home.x,y:home.y,attack:0,shield:0,poison:0,immune:0,flash:0,anim:0,walk:0,angle:0,order:'hold',dest:null,path:[],repath:0,target:null};
+ b.makeSoldier(reinforcement,false);b.units.push(reinforcement);
+ tick(b,BOT_LEVELS.normal.think+.2);assert.equal(reinforcement.order,'advance','reinforcement auto-joins the active assault');assert(reinforcement.dest&&Math.hypot(reinforcement.dest.x-target.x,reinforcement.dest.y-target.y)<170,'reinforcement marches toward the active target');
 }
 {
  const b=new BotBattle(0,undefined,1);b.running=true;const team=b.botTeams[0];b.stock[team]={rice:0,water:0};tick(b,1);assert.equal(b.botStates[0].builds,0,'no free buildings when broke');assert.equal(b.botStates[0].trains,0);
