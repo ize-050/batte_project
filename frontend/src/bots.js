@@ -5,7 +5,7 @@ class BotBattle extends EconomyBattle {
   super(player,world);this.human=player;this.botMode=true;this.difficulty=Object.hasOwn(BOT_LEVELS,difficulty)?difficulty:'normal';
   this.botRules=BOT_LEVELS[this.difficulty];this.activeTeams=[player,...[1,2,3].slice(0,clamp(Math.floor(count)||1,1,3)).map(n=>(player+n)%4)];
   this.botTeams=this.activeTeams.filter(t=>t!==player);this.botViews=Array.from({length:4},()=>({seen:new Uint8Array(COLS*ROWS),visible:new Uint8Array(COLS*ROWS)}));
-  this.botStates=this.botTeams.map(team=>({team,nextThink:0,nextBuild:0,nextAttack:this.botRules.attack,nextRelic:35,builds:0,trains:0,attacks:0,assaultTargetId:null}));this.aiWait.fill(Infinity);
+  this.botStates=this.botTeams.map(team=>({team,nextThink:0,nextBuild:0,nextAttack:this.botRules.attack,nextRelic:35,nextOutpost:22,builds:0,trains:0,attacks:0,assaultTargetId:null}));this.aiWait.fill(Infinity);
   this.units=this.units.filter(u=>this.activeTeams.includes(u.team));for(const b of this.structures)if(!this.activeTeams.includes(b.team))b.hp=0;
   this.structures=this.structures.filter(b=>this.activeTeams.includes(b.team));this.rebuildObstacles();this.updateVision();this.refreshBots();
  }
@@ -58,6 +58,8 @@ class BotBattle extends EconomyBattle {
   if(!threats.length&&this.t>=state.nextRelic&&ready.length>=3&&(this.relic.team!==team||this.relic.captureTeam!==team)){
    this.issue(ready.slice(0,4).map(u=>u.id),'move',this.relic);state.nextRelic=this.t+30;return;
   }
+  const outpost=(this.outposts||[]).filter(o=>o.team!==team).sort((a,b)=>dist(a,home)-dist(b,home))[0];
+  if(!threats.length&&this.t>=state.nextOutpost&&ready.length>=2&&outpost){this.issue(ready.slice(0,3).map(u=>u.id),'move',outpost);state.nextOutpost=this.t+24;return;}
   if(!threats.length&&this.t>=state.nextAttack&&ready.length>=4){
    assault=this.bases.filter(b=>b.hp>0&&b.team!==team).sort((a,b)=>dist(a,home)-dist(b,home))[0];
    if(assault){state.assaultTargetId=assault.id;state.nextAttack=this.t+this.botRules.wave;state.attacks++;}

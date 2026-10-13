@@ -1,5 +1,5 @@
 // A small command layer gives every match a clear reason to send an army out.
-const relicStatus=document.createElement('div');relicStatus.id='r-relic-status';relicStatus.className='r-relic-status';$('battle-watch').after(relicStatus);
+const relicStatus=document.createElement('div');relicStatus.id='r-relic-status';relicStatus.className='r-relic-status';$('battle-watch').after(relicStatus);const outpostStatus=document.createElement('div');outpostStatus.className='r-outpost-status';relicStatus.after(outpostStatus);
 const armyOrders=root.querySelector('.r-army-extra');armyOrders.classList.add('r-army-orders');armyOrders.innerHTML='<button id="r-rally" class="cursor-interaction">⊙ รวมพล</button><button id="r-defend" class="cursor-interaction">⌂ ตั้งรับฐาน</button><button id="r-assault" class="cursor-interaction">⚔ บุกศาลากลาง</button><button id="r-retreat" class="cursor-interaction">↩ ถอยทั้งกอง</button>';
 function commandWholeArmy(kind){
  const army=game.warriors().filter(u=>!u.inTraining);if(!game.running||game.over){message('เริ่มเกมก่อนจึงจะสั่งกองทัพได้');return;}if(!army.length){message('ยังไม่มีทหารให้สั่งการ');return;}
@@ -11,4 +11,4 @@ function commandWholeArmy(kind){
  updateUI();
 }
 $('rally').onclick=()=>commandWholeArmy('rally');$('defend').onclick=()=>commandWholeArmy('defend');$('assault').onclick=()=>commandWholeArmy('assault');$('retreat').onclick=()=>commandWholeArmy('retreat');
-const updateCompactHUDBase=updateCompactHUD;updateCompactHUD=()=>{updateCompactHUDBase();relicStatus.textContent=game.relicStatus?.()||'ศาลากลาง · กำลังเตรียม';};
+const updateCompactHUDBase=updateCompactHUD;updateCompactHUD=()=>{updateCompactHUDBase();relicStatus.textContent=game.relicStatus?.()||'ศาลากลาง · กำลังเตรียม';const owned=(game.outposts||[]).filter(o=>o.team===player).length;outpostStatus.textContent='ป้อมยาม '+owned+'/2 · ยึดเพื่อเปิดแผนที่รอบจุดนั้น';};

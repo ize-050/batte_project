@@ -142,3 +142,5 @@
 #forest-rts .r-commands[data-deck="train"] #r-training-hint,
 #forest-rts .r-commands[data-deck="main"] #r-expedition-building{display:block;font-size:10px}
 #forest-rts .r-topbar .r-player-flags,#forest-rts .r-topbar .r-prototype{display:none}
+
+#forest-rts .r-outpost-status{margin-top:3px;color:#9bcfd0;font-size:9px;line-height:1.35}
