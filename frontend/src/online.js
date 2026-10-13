@@ -13,10 +13,10 @@ online=(()=>{
   $('start').disabled=true;$('start').textContent=api.inMatch?'ออนไลน์ · '+latency+' ms':'รอในห้อง';
   for(const id of ['clan','reset','showcase','expedition-demo','raid','bot-open'])$(id).disabled=true;
   $('online-open').textContent=(api.connected?'● ':'○ ')+(lobby?.code||'กำลังเชื่อมต่อ');
-  $('objective').textContent=api.inMatch?'ทำลายศาลาบัญชาการฝ่ายอื่น · ห้อง '+(lobby?.code||''):'รอเพื่อนและกดพร้อมรบในห้อง';
+  $('objective').textContent=api.inMatch?'ครองศาลากลาง 45 วิ หรือทำลายฐาน · ห้อง '+(lobby?.code||''):'รอเพื่อนและกดพร้อมรบในห้อง';
   root.querySelector('.r-prototype small').textContent=api.connected?'ONLINE · SERVER SYNC':'RECONNECTING';
   root.querySelector('.r-game-clock small').textContent='รบพร้อมกัน '+(lobby?.players.length||0)+' คน';
-  if(api.inMatch&&game.over){$('intro').hidden=false;$('intro').replaceChildren();for(const text of [game.winner===player?'คุณครองป่าเงาจันทร์':game.winner===null?'จบการรบ':'ผู้ชนะ: ตระกูล'+CLANS[game.winner].name,'เปิดหน้าห้อง → ออกจากห้องเพื่อสร้างเกมใหม่']){const el=document.createElement('span');el.textContent=text;$('intro').append(el);}}
+  if(api.inMatch&&game.over){showMatchSummary();const note=document.createElement('span');note.textContent='เปิดหน้าห้อง → ออกจากห้องเพื่อสร้างเกมใหม่';$('intro').append(note);}
   else if(api.inMatch&&game.bases[player].hp<=0){$('intro').hidden=false;$('intro').textContent='ฐานของคุณถูกทำลาย · รอผลการรบ หรือออกจากห้อง';}
  }
  function renderLobby(){

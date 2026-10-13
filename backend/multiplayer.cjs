@@ -27,7 +27,7 @@ class MultiplayerBattle extends EconomyBattle {
   canSee(team,p){return !!this.views?.[team].visible[this.world.cell(p)];}
   hit(u,amount,source,pierce=false){return this.views?this.asTeam(u.team,()=>super.hit(u,amount,source,pierce)):super.hit(u,amount,source,pierce);}
   notify(){} // Network command replies and state drive each client's messages.
-  finishMatch(){const survivors=this.bases.filter(b=>this.activeTeams.includes(b.team)&&b.hp>0);this.over=survivors.length<=1;this.winner=this.over?(survivors[0]?.team??null):null;if(this.over)this.running=false;}
+  finishMatch(){if(this.matchResult){this.over=true;this.winner=this.matchResult.winner;this.running=false;return;}const survivors=this.bases.filter(b=>this.activeTeams.includes(b.team)&&b.hp>0);if(survivors.length<=1)this.endMatch(survivors[0]?.team??null,'hq');}
   surrender(team){if(this.over)return;this.asTeam(team,()=>this.hit(this.bases[team],1e9,null,true));this.finishMatch();}
   step(dt){
     if(this.over)return;
@@ -88,7 +88,7 @@ class MultiplayerBattle extends EconomyBattle {
     const structures=this.structures.filter(b=>b.team===team||visible(b)).map(b=>{const v=copy(b);if(b.team!==team){v.queue=[];delete v.spawn;delete v.upgrading;}return v;});
     // Spawn locations and defeated teams are public; hidden HQ health is not.
     const bases=this.bases.map(b=>b.team===team||visible(b)?copy(b):{id:b.id,team:b.team,x:b.x,y:b.y,hp:b.hp>0?1800:0,max:1800,kind:'hq',building:true,complete:true,w:110,h:80,queue:[]});
-    return {t:this.t,over:this.over,winner:this.winner,running:this.running,started:true,units,structures,bases,
+    return {t:this.t,over:this.over,winner:this.winner,matchResult:copy(this.matchResult),matchStats:copy(this.matchStats),running:this.running,started:true,units,structures,bases,
       horses:copy(this.horses.filter(h=>h.team===team||(['wild','catching','leading'].includes(h.status)&&visible(h)))),
       resources:copy(this.resources.filter(r=>r.team===team||visible(r))),
       stock:this.stock.map((s,i)=>i===team?copy(s):{rice:0,water:0}),

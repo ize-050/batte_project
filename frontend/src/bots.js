@@ -73,7 +73,7 @@ class BotBattle extends EconomyBattle {
   if(!this.running||this.over)return;
   for(const state of this.botStates){if(this.bases[state.team].hp<=0||this.t<state.nextThink)continue;state.nextThink=this.t+this.botRules.think;this.asBot(state.team,()=>{this.updateVision();this.botThink(state);});}
   super.step(dt);
-  const survivors=this.bases.filter(b=>this.activeTeams.includes(b.team)&&b.hp>0);this.over=this.bases[this.human].hp<=0||survivors.length<=1;this.winner=survivors.length===1?survivors[0].team:null;
-  if(this.over)this.running=false;
+  if(this.matchResult){this.over=true;this.winner=this.matchResult.winner;this.running=false;return;}
+  const survivors=this.bases.filter(b=>this.activeTeams.includes(b.team)&&b.hp>0);if(this.bases[this.human].hp<=0||survivors.length<=1)this.endMatch(survivors[0]?.team??null,'hq');
  }
 }

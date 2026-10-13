@@ -6,7 +6,7 @@ function commandWholeArmy(kind){
  selectedBuilding=null;selected=new Set(army.map(u=>u.id));const ids=[...selected],home=STARTS[player],side=home.x<W/2?1:-1;
  if(kind==='rally'){const point=game.world.free({x:home.x+side*170,y:home.y+(home.y<H/2?105:-105)});game.issue(ids,'move',point);message('รวมพลแล้ว · กองทัพกำลังตั้งขบวนหน้าฐาน');}
  if(kind==='defend'){game.issue(ids,'move',home);message('ตั้งรับฐาน · กองทัพกำลังกลับไปคุ้มกันศาลาบัญชาการ');}
- if(kind==='assault'){game.issue(ids,'advance',game.relic);message('บุกศาลากลาง · ยึดครบ 6 วิ รับ +24 ข้าว / +16 น้ำ ทุก 10 วิ');}
+ if(kind==='assault'){game.issue(ids,'advance',game.relic);message('บุกศาลากลาง · ยึด 6 วิ แล้วครองครบ 45 วิจะชนะทันที');}
  if(kind==='retreat'){game.issue(ids,'move',home);message('ถอยทั้งกองกลับฐาน');}
  updateUI();
 }
