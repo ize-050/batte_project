@@ -34,6 +34,7 @@ const RICE_PATCHES=48;
 function ricePatchPoint(r,index){const row=Math.floor(index/8),col=index%8;return{x:r.x+(col-3.5)*16+(row-2.5)*15,y:r.y+(col-3.5)*7-(row-2.5)*9};}
 function unitTitle(u){return u.worker?'ชาวบ้าน':u.className||TRAINING[u.ranged?'archery':'dojo'].name;}
 const RICE_CYCLE={fallow:8,growing:22};
+const RELIC_CAPTURE_SECONDS=6,RELIC_REWARD_SECONDS=10,RELIC_REWARD={rice:24,water:16};
 // Movement is role-based: defenders can answer raids, while ranged and heavy
 // units trade speed for safer range or durability.
 const UNIT_SPEED={worker:-16,sword:0,archer:-8,armored:-12,guardian:-17,mystic:-5,elite:5,hero:9};
@@ -56,6 +57,8 @@ class VillageBattle extends Battle {
     this.terrainBlocked=world.blocked.slice();
     for(const r of this.resources.filter(r=>r.type==='water'))for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){const dx=(x*CELL+20-r.visualX)/48,dy=(y*CELL+20-r.visualY)/30;if(dx*dx+dy*dy<1)this.terrainBlocked[y*COLS+x]=1;}
     this.nextStructure=0;this.nextUnit=this.units.length;this.events=[];this.eventSerial=0;
+    const relicPoint=world.free({x:Math.round(W*.39),y:Math.round(H*.5)})||{x:Math.round(W*.39),y:Math.round(H*.5)};
+    this.relic={...relicPoint,team:null,captureTeam:null,capture:0,reward:0,radius:112};
     this.war=false;this.wave=0;this.economyStats={rice:0,water:0,built:0,trained:0,born:0};
     for(const u of this.units){const b=STARTS[u.team],s=b.x<W/2?1:-1,i=u.id%10;Object.assign(u,world.free({x:b.x+s*(140+i%3*36),y:b.y+Math.floor(i/3)*40}));u.order='hold';u.dest=null;u.raid=false;u.path=[];if(i<6)this.makeWorker(u);else this.makeSoldier(u,i>=8);}
     for(let team=0;team<4;team++){const b=STARTS[team],s=b.x<W/2?1:-1;this.addStructure('hut',{x:b.x-s*155,y:b.y+(b.y<H/2?150:-150)},team,true);}
@@ -79,6 +82,15 @@ class VillageBattle extends Battle {
   workers(team=this.player){return this.alive(team).filter(u=>u.worker);}
   warriors(team=this.player){return this.alive(team).filter(u=>!u.worker);}
   targets(team){return [...this.alive().filter(u=>u.team!==team),...this.structures.filter(b=>b.team!==team&&b.hp>0)];}
+  relicStatus(team=this.player){const r=this.relic;if(!r)return'';if(r.team===null)return r.captureTeam===null?'ศาลากลาง · ยังไม่มีผู้ครอง':'ศาลากลาง · '+CLANS[r.captureTeam].name+' กำลังยึด '+Math.ceil(r.capture*100)+'%';return r.team===team?'ศาลากลาง · ของเรา +'+RELIC_REWARD.rice+'/'+RELIC_REWARD.water+' ทุก '+RELIC_REWARD_SECONDS+' วิ':'ศาลากลาง · '+CLANS[r.team].name+' ครองอยู่';}
+  relicStep(dt){
+    const r=this.relic;if(!r)return;
+    const teams=[...new Set(this.alive().filter(u=>!u.worker&&dist(u,r)<=r.radius).map(u=>u.team))];
+    if(teams.length===1){const team=teams[0];if(team===r.team){r.captureTeam=null;r.capture=0;}else if(r.captureTeam===team){r.capture=Math.min(1,r.capture+dt/RELIC_CAPTURE_SECONDS);}else{r.captureTeam=team;r.capture=dt/RELIC_CAPTURE_SECONDS;}
+      if(r.capture>=1){const previous=r.team;r.team=team;r.captureTeam=null;r.capture=0;r.reward=0;if(team===this.player)this.notify('ยึดศาลากลางสำเร็จ · รับข้าวและน้ำทุก 10 วิ');else if(previous===this.player)this.notify('ศาลากลางถูก'+CLANS[team].name+'ยึด · ส่งกองทัพไปชิงคืน');}
+    }else if(r.capture>0){r.capture=Math.max(0,r.capture-dt*.08);if(!r.capture)r.captureTeam=null;}
+    if(r.team!==null){r.reward+=dt;while(r.reward>=RELIC_REWARD_SECONDS){r.reward-=RELIC_REWARD_SECONDS;const stock=this.stock[r.team],cap=this.storage(r.team);stock.rice=Math.min(cap.rice,stock.rice+RELIC_REWARD.rice);stock.water=Math.min(cap.water,stock.water+RELIC_REWARD.water);if(r.team===this.player)this.notify('ศาลากลางส่งบรรณาการ · +'+RELIC_REWARD.rice+' ข้าว / +'+RELIC_REWARD.water+' น้ำ');}}
+  }
   updateVision(){super.updateVision();for(const b of this.structures||[]){if(b.team!==this.player||b.hp<=0||!b.complete)continue;const radius=b.kind==='tower'?(TOWER_LEVELS[b.level||1].range+70):280;for(let y=Math.max(0,Math.floor((b.y-radius)/CELL));y<=Math.min(ROWS-1,Math.ceil((b.y+radius)/CELL));y++)for(let x=Math.max(0,Math.floor((b.x-radius)/CELL));x<=Math.min(COLS-1,Math.ceil((b.x+radius)/CELL));x++){const i=y*COLS+x;if(dist(b,this.world.center(i))<=radius)this.visible[i]=this.seen[i]=1;}}}
   acceptsTarget(u,v){return u.targetPriority==='units'?!v.building:u.targetPriority==='buildings'?!!v.building:true;}
   targetDistance(u,v){return v.building?Math.hypot(Math.max(0,Math.abs(u.x-v.x)-(v.w||70)/2),Math.max(0,Math.abs(u.y-v.y)-(v.h||70)/2)):dist(u,v);}
@@ -243,7 +255,7 @@ class VillageBattle extends Battle {
     advance(soldiers[1],'shrine');advance(soldiers[2],'dojo');advance(soldiers[2],'shrine');advance(soldiers[3],'dojo');advance(soldiers[3],'shrine');advance(soldiers[3],'warhall');
     const workers=this.workers(),rice=this.resources.find(r=>r.id==='rice-'+this.player),water=this.resources.find(r=>r.id==='water-'+this.player);this.assignGather(workers.slice(0,4).map(u=>u.id),rice);this.assignGather(workers.slice(4).map(u=>u.id),water);this.stock[this.player]={rice:300,water:180};this.economyStats.built=plans.length;this.updateVision();
   }
-  step(dt){if(!this.running||this.over)return;dt=Math.min(dt,.05);this.formStep(dt);for(const u of this.alive())u.heroCooldown=Math.max(0,(u.heroCooldown||0)-dt);for(const r of this.resources)if(r.type==='rice')this.riceStep(r,dt);for(const u of this.alive().filter(u=>(this.activeTeams||[this.player]).includes(u.team)&&(u.worker||u.job?.type==='train')))this.workerStep(u,dt);for(const b of this.structures.filter(b=>b.hp>0&&b.complete)){if(b.kind==='hut'&&(this.activeTeams||[this.player]).includes(b.team)&&this.population(b.team)<this.capacity(b.team)){b.spawn+=dt;if(b.spawn>=30){b.spawn-=30;this.spawnWorker(b);}}if(b.queue?.length){const q=b.queue[0],u=this.units.find(u=>u.id===q.unitId);if(!u||u.hp<=0){b.queue.shift();continue;}if(u.inTraining){q.remaining-=dt;if(q.remaining<=0){this.finishTraining(u,q.recipe);Object.assign(u,this.door(b));b.queue.shift();this.economyStats.trained++;if(b.team===this.player)this.notify(q.recipe.name+'ฝึกเสร็จ · กำลังคนเท่าเดิม');}}}if(b.kind==='tower'){if(b.upgrading){b.upgrading.remaining-=dt;if(b.upgrading.remaining<=0){const health=b.hp/b.max;b.level++;b.max+=350;b.hp=b.max*health;Object.assign(b,{range:TOWER_LEVELS[b.level].range,damage:TOWER_LEVELS[b.level].damage});b.upgrading=null;this.notify('ป้อมธนูระดับ '+b.level+' พร้อมยิง');}}const d=TOWER_LEVELS[b.level];b.attack-=dt;b.anim=Math.max(0,(b.anim||0)-dt);const v=this.nearest(b,d.range);if(v&&b.attack<=0){this.shoot(b,v,d.damage);b.attack=d.interval;}}}
+  step(dt){if(!this.running||this.over)return;dt=Math.min(dt,.05);this.formStep(dt);this.relicStep(dt);for(const u of this.alive())u.heroCooldown=Math.max(0,(u.heroCooldown||0)-dt);for(const r of this.resources)if(r.type==='rice')this.riceStep(r,dt);for(const u of this.alive().filter(u=>(this.activeTeams||[this.player]).includes(u.team)&&(u.worker||u.job?.type==='train')))this.workerStep(u,dt);for(const b of this.structures.filter(b=>b.hp>0&&b.complete)){if(b.kind==='hut'&&(this.activeTeams||[this.player]).includes(b.team)&&this.population(b.team)<this.capacity(b.team)){b.spawn+=dt;if(b.spawn>=30){b.spawn-=30;this.spawnWorker(b);}}if(b.queue?.length){const q=b.queue[0],u=this.units.find(u=>u.id===q.unitId);if(!u||u.hp<=0){b.queue.shift();continue;}if(u.inTraining){q.remaining-=dt;if(q.remaining<=0){this.finishTraining(u,q.recipe);Object.assign(u,this.door(b));b.queue.shift();this.economyStats.trained++;if(b.team===this.player)this.notify(q.recipe.name+'ฝึกเสร็จ · กำลังคนเท่าเดิม');}}}if(b.kind==='tower'){if(b.upgrading){b.upgrading.remaining-=dt;if(b.upgrading.remaining<=0){const health=b.hp/b.max;b.level++;b.max+=350;b.hp=b.max*health;Object.assign(b,{range:TOWER_LEVELS[b.level].range,damage:TOWER_LEVELS[b.level].damage});b.upgrading=null;this.notify('ป้อมธนูระดับ '+b.level+' พร้อมยิง');}}const d=TOWER_LEVELS[b.level];b.attack-=dt;b.anim=Math.max(0,(b.anim||0)-dt);const v=this.nearest(b,d.range);if(v&&b.attack<=0){this.shoot(b,v,d.damage);b.attack=d.interval;}}}
     // Working peasants perform only their assigned economy job; they don't auto-chase.
     super.step(dt);
     // A surviving HQ and hut can recover even if every current unit is lost.
